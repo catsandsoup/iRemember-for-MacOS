@@ -1,0 +1,168 @@
+{
+  "source": "/Users/monty/Documents/GitHub/iRemember/iRemember/iRememberApp.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "iRemember for Messages",
+        "location": {
+          "startingColumn": 21,
+          "startingLine": 26
+        }
+      },
+      {
+        "comment": "",
+        "key": "View",
+        "location": {
+          "startingColumn": 25,
+          "startingLine": 59
+        }
+      },
+      {
+        "comment": "",
+        "key": "File",
+        "location": {
+          "startingColumn": 25,
+          "startingLine": 81
+        }
+      },
+      {
+        "comment": "",
+        "key": "iRemember",
+        "location": {
+          "startingColumn": 25,
+          "startingLine": 95
+        }
+      },
+      {
+        "comment": "",
+        "key": "Navigate",
+        "location": {
+          "startingColumn": 25,
+          "startingLine": 117
+        }
+      },
+      {
+        "comment": "",
+        "key": "Hide Inspector",
+        "location": {
+          "startingColumn": 54,
+          "startingLine": 60
+        }
+      },
+      {
+        "comment": "",
+        "key": "Show Inspector",
+        "location": {
+          "startingColumn": 73,
+          "startingLine": 60
+        }
+      },
+      {
+        "comment": "",
+        "key": "Show Separate Threads",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 68
+        }
+      },
+      {
+        "comment": "",
+        "key": "Show Contacts",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 74
+        }
+      },
+      {
+        "comment": "",
+        "key": "Export Conversation…",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 82
+        }
+      },
+      {
+        "comment": "",
+        "key": "Export Loaded Range…",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 88
+        }
+      },
+      {
+        "comment": "",
+        "key": "Export PDF Archive…",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 96
+        }
+      },
+      {
+        "comment": "",
+        "key": "Export JSON Archive…",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 101
+        }
+      },
+      {
+        "comment": "",
+        "key": "Export DOCX Archive…",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 106
+        }
+      },
+      {
+        "comment": "",
+        "key": "Export Shared Content…",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 111
+        }
+      },
+      {
+        "comment": "",
+        "key": "Jump to Date",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 118
+        }
+      },
+      {
+        "comment": "",
+        "key": "Show Transcript",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 126
+        }
+      },
+      {
+        "comment": "",
+        "key": "Show Media Browser",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 132
+        }
+      },
+      {
+        "comment": "",
+        "key": "Previous Day",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 140
+        }
+      },
+      {
+        "comment": "",
+        "key": "Next Day",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 146
+        }
+      }
+    ]
+  },
+  "version": 1
+}

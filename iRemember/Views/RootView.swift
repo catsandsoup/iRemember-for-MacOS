@@ -3,6 +3,7 @@ import SwiftData
 
 struct RootView: View {
     @Environment(\.modelContext) private var modelContext
+    @State private var splitViewVisibility: NavigationSplitViewVisibility = .all
     @Bindable var appModel: AppModel
 
     var body: some View {
@@ -48,7 +49,7 @@ struct RootView: View {
     }
 
     private var readyShell: some View {
-        NavigationSplitView {
+        NavigationSplitView(columnVisibility: $splitViewVisibility) {
             SidebarView(appModel: appModel)
                 .accessibilityIdentifier("sidebar-pane")
         } detail: {
@@ -60,12 +61,13 @@ struct RootView: View {
         .searchable(
             text: $appModel.searchText,
             placement: .toolbar,
-            prompt: "Search messages, people, links, or files"
+            prompt: "Search messages, contacts, and files"
         )
         .inspector(isPresented: $appModel.isInspectorVisible) {
             InspectorView(appModel: appModel)
                 .accessibilityIdentifier("inspector-pane")
         }
+        .inspectorColumnWidth(min: 280, ideal: 320, max: 360)
         .toolbar {
             ReadyToolbar(appModel: appModel)
         }
@@ -96,33 +98,17 @@ private struct ReadyToolbar: ToolbarContent {
         }
 
         ToolbarItemGroup {
-            Picker("Browse Mode", selection: sidebarModeBinding) {
-                ForEach(SidebarMode.allCases) { mode in
-                    Text(mode.label).tag(mode)
-                }
-            }
-            .pickerStyle(.segmented)
-            .frame(width: 150)
-
             if appModel.selectedArchiveSummary != nil {
-                Picker("Content Mode", selection: $appModel.contentMode) {
+                Picker("View", selection: $appModel.contentMode) {
                     ForEach(ContentMode.allCases) { mode in
                         Text(mode.label).tag(mode)
                     }
                 }
-                .pickerStyle(.segmented)
-                .frame(width: 168)
+                .pickerStyle(.menu)
+                .labelsHidden()
+                .controlSize(.small)
                 .accessibilityIdentifier("content-mode-picker")
-            }
-
-            Menu {
-                Picker("Search In", selection: $appModel.searchScope) {
-                    ForEach(SearchScope.allCases) { scope in
-                        Text(scope.label).tag(scope)
-                    }
-                }
-            } label: {
-                Label("Search Scope", systemImage: "line.3.horizontal.decrease.circle")
+                .help("Choose the main view")
             }
 
             Button("Jump to Date", systemImage: "calendar") {
@@ -130,25 +116,19 @@ private struct ReadyToolbar: ToolbarContent {
             }
             .labelStyle(.iconOnly)
             .disabled(appModel.selectedArchiveSummary == nil)
+            .help("Jump to a date")
+        }
 
+        ToolbarItemGroup {
             ExportToolbarMenu(appModel: appModel)
 
             Button(appModel.isInspectorVisible ? "Hide Details" : "Show Details", systemImage: "info.circle") {
                 appModel.toggleInspectorVisibility()
             }
-            .buttonBorderShape(.circle)
+            .labelStyle(.iconOnly)
             .disabled(appModel.accessState != .ready)
             .help(appModel.isInspectorVisible ? "Hide conversation details" : "Show conversation details")
         }
-    }
-
-    private var sidebarModeBinding: Binding<SidebarMode> {
-        Binding(
-            get: { appModel.sidebarMode },
-            set: { newValue in
-                Task { await appModel.setSidebarMode(newValue) }
-            }
-        )
     }
 }
 
@@ -157,34 +137,19 @@ private struct ArchiveToolbarTitleView: View {
 
     var body: some View {
         if let archive = appModel.selectedArchiveSummary {
-            Button {
-                appModel.toggleInspectorVisibility()
-            } label: {
-                HStack(spacing: AppChrome.spacing8) {
-                    VStack(spacing: 2) {
-                        Text(archive.title)
-                            .font(.headline)
-                            .lineLimit(1)
+            VStack(spacing: 2) {
+                Text(archive.title)
+                    .font(.headline)
+                    .lineLimit(1)
 
-                        Text(appModel.currentArchiveSubtitle)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
-                    }
-
-                    Image(systemName: appModel.isInspectorVisible ? "chevron.right.circle.fill" : "info.circle")
-                        .font(.title3)
-                        .foregroundStyle(.secondary)
-                        .accessibilityHidden(true)
-                }
-                .frame(maxWidth: 360)
-                .contentShape(Rectangle())
+                Text(appModel.currentArchiveSubtitle)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
             }
-            .buttonStyle(.plain)
-            .help(appModel.isInspectorVisible ? "Hide conversation details" : "Show conversation details")
-            .accessibilityLabel(appModel.isInspectorVisible ? "Hide conversation details" : "Show conversation details")
+            .frame(maxWidth: 280)
         } else {
-            Text("iRemember")
+            Text("Conversations")
                 .font(.headline)
         }
     }
@@ -216,8 +181,10 @@ private struct ExportToolbarMenu: View {
             }
         } label: {
             Label("Export", systemImage: "square.and.arrow.up")
+                .labelStyle(.iconOnly)
         }
         .disabled(appModel.selectedArchiveSummary == nil)
+        .help("Export this conversation")
     }
 }
 

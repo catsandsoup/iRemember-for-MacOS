@@ -845,6 +845,7 @@ public actor SQLiteMessagesSource: MessagesSource {
             m.guid,
             m.text,
             m.attributedBody,
+            \(messageColumnExpression(column: "balloon_bundle_id", capabilities: capabilities)),
             COALESCE(m.cache_has_attachments, 0),
             m.date,
             COALESCE(m.is_from_me, 0),
@@ -871,27 +872,36 @@ public actor SQLiteMessagesSource: MessagesSource {
             try database.bind(int64: chatRowID, at: 1, in: statement)
         }) { row in
             guard let messageRowID = row.int64(0),
-                  let attachmentRowID = row.int64(8),
+                  let attachmentRowID = row.int64(9),
                   let messageID = messageIDsByRowID[messageRowID] else {
                 return
             }
 
-            let sentAt = Self.appleMessageDate(from: row.int64(5))
+            let sentAt = Self.appleMessageDate(from: row.int64(6))
             let body = resolvedVisibleBody(
                 text: row.string(2),
                 attributedBody: row.data(3),
                 hasAttachments: true,
                 context: .attachmentContext
             )
-            let sender = participant(handle: row.string(7), isFromMe: row.bool(6))
+            let sender = participant(handle: row.string(8), isFromMe: row.bool(7))
+            guard !shouldIgnoreAttachment(
+                rawFilename: row.string(11),
+                transferName: row.string(12),
+                mimeType: row.string(13),
+                utiString: row.string(14),
+                balloonBundleID: row.string(4)
+            ) else {
+                return
+            }
             let attachment = buildAttachment(
                 attachmentRowID: attachmentRowID,
-                attachmentGUID: row.string(9),
-                rawFilename: row.string(10),
-                transferName: row.string(11),
-                mimeType: row.string(12),
-                utiString: row.string(13),
-                byteSize: row.int64(14) ?? 0,
+                attachmentGUID: row.string(10),
+                rawFilename: row.string(11),
+                transferName: row.string(12),
+                mimeType: row.string(13),
+                utiString: row.string(14),
+                byteSize: row.int64(15) ?? 0,
                 sentAt: sentAt
             )
 
@@ -924,12 +934,13 @@ public actor SQLiteMessagesSource: MessagesSource {
             m.guid,
             m.text,
             m.attributedBody,
+            \(messageColumnExpression(column: "balloon_bundle_id", capabilities: capabilities)),
             COALESCE(m.cache_has_attachments, 0),
             m.date,
             COALESCE(m.is_from_me, 0),
             h.id,
+            \(messageColumnExpression(column: "reply_to_guid", capabilities: capabilities)),
             \(messageColumnExpression(column: "thread_originator_guid", capabilities: capabilities)),
-            \(messageColumnExpression(column: "thread_originator_part", capabilities: capabilities, defaultExpression: "0")),
             a.ROWID,
             a.guid,
             a.filename,
@@ -960,10 +971,10 @@ public actor SQLiteMessagesSource: MessagesSource {
 
             if accumulators[messageRowID] == nil {
                 orderedRowIDs.append(messageRowID)
-                let sentAt = Self.appleMessageDate(from: row.int64(5))
-                let isFromMe = row.bool(6)
-                let sender = participant(handle: row.string(7), isFromMe: isFromMe)
-                let direction: MessageDirection = isFromMe ? .outgoing : (row.string(7) == nil ? .system : .incoming)
+                let sentAt = Self.appleMessageDate(from: row.int64(6))
+                let isFromMe = row.bool(7)
+                let sender = participant(handle: row.string(8), isFromMe: isFromMe)
+                let direction: MessageDirection = isFromMe ? .outgoing : (row.string(8) == nil ? .system : .incoming)
 
                 accumulators[messageRowID] = MessageAccumulator(
                     id: messageID,
@@ -973,26 +984,38 @@ public actor SQLiteMessagesSource: MessagesSource {
                     body: resolvedVisibleBody(
                         text: row.string(2),
                         attributedBody: row.data(3),
-                        hasAttachments: row.bool(4),
+                        hasAttachments: row.bool(5),
                         context: .transcript
                     ),
                     sentAt: sentAt,
                     direction: direction,
                     attachments: [],
-                    replyReferenceGUID: row.string(8)
+                    replyReferenceGUID: preferredReplyReferenceGUID(
+                        replyToGUID: row.string(9),
+                        threadOriginatorGUID: row.string(10)
+                    )
                 )
             }
 
-            guard let attachmentRowID = row.int64(10) else { return }
+            guard let attachmentRowID = row.int64(11) else { return }
+            guard !shouldIgnoreAttachment(
+                rawFilename: row.string(13),
+                transferName: row.string(14),
+                mimeType: row.string(15),
+                utiString: row.string(16),
+                balloonBundleID: row.string(4)
+            ) else {
+                return
+            }
             let attachment = buildAttachment(
                 attachmentRowID: attachmentRowID,
-                attachmentGUID: row.string(11),
-                rawFilename: row.string(12),
-                transferName: row.string(13),
-                mimeType: row.string(14),
-                utiString: row.string(15),
-                byteSize: row.int64(16) ?? 0,
-                sentAt: Self.appleMessageDate(from: row.int64(5))
+                attachmentGUID: row.string(12),
+                rawFilename: row.string(13),
+                transferName: row.string(14),
+                mimeType: row.string(15),
+                utiString: row.string(16),
+                byteSize: row.int64(17) ?? 0,
+                sentAt: Self.appleMessageDate(from: row.int64(6))
             )
             accumulators[messageRowID]?.attachments.append(attachment)
         }
@@ -1193,6 +1216,34 @@ public actor SQLiteMessagesSource: MessagesSource {
         )
     }
 
+    private func shouldIgnoreAttachment(
+        rawFilename: String?,
+        transferName: String?,
+        mimeType: String?,
+        utiString: String?,
+        balloonBundleID: String?
+    ) -> Bool {
+        if balloonBundleID == "com.apple.messages.URLBalloonProvider" {
+            return true
+        }
+
+        if utiString == "dyn.age81a5dzq7y066dbtf0g82peqf4hk2pdrb00n5xy" {
+            return true
+        }
+
+        let names = [rawFilename, transferName]
+            .compactMap { $0?.lowercased() }
+        if names.contains(where: { $0.hasSuffix(".pluginpayloadattachment") }) {
+            return true
+        }
+
+        if mimeType == "text/uri-list" {
+            return true
+        }
+
+        return false
+    }
+
     private func resolveAttachmentURL(from rawFilename: String?) -> URL? {
         guard let rawFilename, !rawFilename.isEmpty else { return nil }
 
@@ -1261,10 +1312,23 @@ public actor SQLiteMessagesSource: MessagesSource {
     }
 
     private func parseAssociatedMessageGUID(_ rawValue: String?) -> AssociatedMessageReference? {
-        guard let rawValue, !rawValue.isEmpty else { return nil }
+        guard let rawValue = rawValue?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !rawValue.isEmpty else {
+            return nil
+        }
 
         let components = rawValue.split(separator: "/")
-        guard let guid = components.last.map(String.init), !guid.isEmpty else { return nil }
+        let guid: String
+        if components.count > 1 {
+            guard let parsedGUID = components.last.map(String.init), !parsedGUID.isEmpty else { return nil }
+            guid = parsedGUID
+        } else if let separator = rawValue.firstIndex(of: ":") {
+            let suffix = rawValue[rawValue.index(after: separator)...]
+            guard !suffix.isEmpty else { return nil }
+            guid = String(suffix)
+        } else {
+            guid = rawValue
+        }
 
         let partIndex: Int?
         if let prefix = components.first,
@@ -1312,6 +1376,20 @@ public actor SQLiteMessagesSource: MessagesSource {
         case .emoji(let emoji): return "emoji:\(emoji)"
         case .sticker: return "sticker"
         }
+    }
+
+    private func preferredReplyReferenceGUID(replyToGUID: String?, threadOriginatorGUID: String?) -> String? {
+        if let replyToGUID = replyToGUID?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !replyToGUID.isEmpty {
+            return replyToGUID
+        }
+
+        if let threadOriginatorGUID = threadOriginatorGUID?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !threadOriginatorGUID.isEmpty {
+            return threadOriginatorGUID
+        }
+
+        return nil
     }
 
     private func participant(handle: String?, isFromMe: Bool) -> Participant? {
@@ -1508,6 +1586,10 @@ public actor SQLiteMessagesSource: MessagesSource {
             return utf8
         }
 
+        if let utf16 = bestUTF16DecodedString(from: payloadBytes) {
+            return utf16
+        }
+
         if let macOSRoman = String(data: payloadBytes, encoding: .macOSRoman) {
             return macOSRoman
         }
@@ -1517,6 +1599,34 @@ public actor SQLiteMessagesSource: MessagesSource {
         }
 
         return String(data: payloadBytes, encoding: .utf8)
+    }
+
+    private func bestUTF16DecodedString(from data: Data) -> String? {
+        let zeroByteCount = data.reduce(into: 0) { partial, byte in
+            if byte == 0 {
+                partial += 1
+            }
+        }
+        guard zeroByteCount > 0, zeroByteCount * 4 >= data.count else {
+            return nil
+        }
+
+        let candidates = [
+            String(data: data, encoding: .utf16LittleEndian),
+            String(data: data, encoding: .utf16BigEndian)
+        ]
+            .compactMap { $0 }
+            .compactMap(cleanVisibleBody)
+
+        return candidates.max { lhs, rhs in
+            visibleTextScore(lhs) < visibleTextScore(rhs)
+        }
+    }
+
+    private func visibleTextScore(_ value: String) -> Int {
+        let letters = value.unicodeScalars.filter { CharacterSet.letters.contains($0) }.count
+        let words = value.split(whereSeparator: \.isWhitespace).count
+        return (letters * 4) + words
     }
 
     private func longestValidUTF8Prefix(in data: Data) -> String? {
@@ -1638,6 +1748,7 @@ public actor SQLiteMessagesSource: MessagesSource {
             "NSAttributedString",
             "NSMutableAttributedString",
             "NSObject",
+            "NSValue",
             "AttributeName",
             "GUIDAttributeName",
             "WritingDirection",
@@ -1647,6 +1758,9 @@ public actor SQLiteMessagesSource: MessagesSource {
             "NSMutableString",
             "NSFont",
             "NSColor",
+            "NSURL",
+            "NSUUID",
+            "NSData",
             "IMFileTransfer",
             "NSString",
             "NSKeyedArchiver",

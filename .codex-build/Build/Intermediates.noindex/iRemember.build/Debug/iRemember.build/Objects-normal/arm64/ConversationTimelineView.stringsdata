@@ -1,0 +1,56 @@
+{
+  "source": "/Users/monty/Documents/GitHub/iRemember/iRemember/Views/ConversationTimelineView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Jump to %lld",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 120
+        }
+      },
+      {
+        "comment": "",
+        "key": "Jump to %@",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 147
+        }
+      },
+      {
+        "comment": "",
+        "key": "No timeline anchors available yet",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 174
+        }
+      },
+      {
+        "comment": "",
+        "key": "No timeline",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 164
+        }
+      },
+      {
+        "comment": "",
+        "key": "The archive index has not loaded enough history to show year and month anchors yet.",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 168
+        }
+      },
+      {
+        "comment": "",
+        "key": "Release to jump",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 192
+        }
+      }
+    ]
+  },
+  "version": 1
+}

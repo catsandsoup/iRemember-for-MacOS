@@ -1,0 +1,160 @@
+{
+  "source": "/Users/monty/Documents/GitHub/iRemember/iRemember/Views/SettingsView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Current strategy",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 9
+        }
+      },
+      {
+        "comment": "",
+        "key": "Current source",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 13
+        }
+      },
+      {
+        "comment": "",
+        "key": "Transcript policy",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 17
+        }
+      },
+      {
+        "comment": "",
+        "key": "Current library mode",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 21
+        }
+      },
+      {
+        "comment": "",
+        "key": "Messages paths",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 25
+        }
+      },
+      {
+        "comment": "",
+        "key": "Windowed around active focus",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 18
+        }
+      },
+      {
+        "comment": "",
+        "key": "General",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 43
+        }
+      },
+      {
+        "comment": "",
+        "key": "The live Messages source reads only local files. Future derived indexes and caches should remain local, transparent, and opt-in.",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 51
+        }
+      },
+      {
+        "comment": "",
+        "key": "Enable local index encryption when available",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 47
+        }
+      },
+      {
+        "comment": "",
+        "key": "Exclude message bodies from logs",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 48
+        }
+      },
+      {
+        "comment": "",
+        "key": "Require confirmation before export",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 49
+        }
+      },
+      {
+        "comment": "",
+        "key": "Privacy",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 57
+        }
+      },
+      {
+        "comment": "",
+        "key": "Warm launch target",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 61
+        }
+      },
+      {
+        "comment": "",
+        "key": "Date jump target",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 65
+        }
+      },
+      {
+        "comment": "",
+        "key": "Media grid open target",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 69
+        }
+      },
+      {
+        "comment": "",
+        "key": "< 2 seconds",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 62
+        }
+      },
+      {
+        "comment": "",
+        "key": "< 300 ms median",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 66
+        }
+      },
+      {
+        "comment": "",
+        "key": "< 500 ms",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 70
+        }
+      },
+      {
+        "comment": "",
+        "key": "Performance",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 75
+        }
+      }
+    ]
+  },
+  "version": 1
+}

@@ -1,0 +1,112 @@
+{
+  "source": "/Users/monty/Documents/GitHub/iRemember/iRemember/Views/MediaViewerSheet.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Choose a photo or video to preview it here.",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 66
+        }
+      },
+      {
+        "comment": "",
+        "key": "Media Unavailable",
+        "location": {
+          "startingColumn": 21,
+          "startingLine": 64
+        }
+      },
+      {
+        "comment": "",
+        "key": "Previous",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 26
+        }
+      },
+      {
+        "comment": "",
+        "key": "Next",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 31
+        }
+      },
+      {
+        "comment": "",
+        "key": "Show in Conversation",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 52
+        }
+      },
+      {
+        "comment": "",
+        "key": "This attachment is not available locally on this Mac.",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 98
+        }
+      },
+      {
+        "comment": "",
+        "key": "Original Unavailable",
+        "location": {
+          "startingColumn": 21,
+          "startingLine": 96
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld of %lld",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 124
+        }
+      },
+      {
+        "comment": "",
+        "key": "Open in Default App",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 156
+        }
+      },
+      {
+        "comment": "",
+        "key": "Open in Preview",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 161
+        }
+      },
+      {
+        "comment": "",
+        "key": "Open in QuickTime Player",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 167
+        }
+      },
+      {
+        "comment": "",
+        "key": "Reveal in Finder",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 172
+        }
+      },
+      {
+        "comment": "",
+        "key": "Open",
+        "location": {
+          "startingColumn": 19,
+          "startingLine": 177
+        }
+      }
+    ]
+  },
+  "version": 1
+}

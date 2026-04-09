@@ -9,14 +9,13 @@ struct ConversationContentView: View {
                 contentView
             } else {
                 ContentUnavailableView(
-                    "Select an Archive",
+                    "Select a Conversation",
                     systemImage: "bubble.left.and.bubble.right",
-                    description: Text("Choose a thread or person archive from the sidebar to browse messages, media, and context.")
+                    description: Text("Choose a contact or conversation from the sidebar to browse messages, shared media, and details.")
                 )
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(AppTheme.contentBackground)
     }
 
     @ViewBuilder

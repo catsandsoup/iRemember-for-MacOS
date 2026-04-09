@@ -1,0 +1,136 @@
+{
+  "source": "/Users/monty/Documents/GitHub/iRemember/iRemember/Views/SidebarView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Pinned",
+        "location": {
+          "startingColumn": 21,
+          "startingLine": 39
+        }
+      },
+      {
+        "comment": "",
+        "key": "Conversations",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 63
+        }
+      },
+      {
+        "comment": "",
+        "key": "All Conversations",
+        "location": {
+          "startingColumn": 64,
+          "startingLine": 63
+        }
+      },
+      {
+        "comment": "",
+        "key": "Try a different phrase, or switch the search scope.",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 97
+        }
+      },
+      {
+        "comment": "",
+        "key": "Searching",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 91
+        }
+      },
+      {
+        "comment": "",
+        "key": "No Matches",
+        "location": {
+          "startingColumn": 21,
+          "startingLine": 95
+        }
+      },
+      {
+        "comment": "",
+        "key": "Search Results",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 130
+        }
+      },
+      {
+        "comment": "",
+        "key": "Change search scope",
+        "location": {
+          "startingColumn": 19,
+          "startingLine": 145
+        }
+      },
+      {
+        "comment": "",
+        "key": "Search In",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 135
+        }
+      },
+      {
+        "comment": "",
+        "key": "Search In",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 141
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@, %@",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 188
+        }
+      },
+      {
+        "comment": "",
+        "key": "Export Archive…",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 184
+        }
+      },
+      {
+        "comment": "",
+        "key": "Export Loaded Range…",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 185
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@. %@. %@",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 248
+        }
+      },
+      {
+        "comment": "",
+        "key": "•",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 229
+        }
+      },
+      {
+        "comment": "",
+        "key": "Jump in Context",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 245
+        }
+      }
+    ]
+  },
+  "version": 1
+}

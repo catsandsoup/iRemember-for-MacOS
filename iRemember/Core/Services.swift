@@ -19,6 +19,52 @@ public enum SourceStrategy: String, Sendable {
     }
 }
 
+public enum ContactIdentityAccessState: String, Sendable {
+    case unavailable
+    case notDetermined
+    case restricted
+    case denied
+    case authorized
+    case limited
+
+    public var label: String {
+        switch self {
+        case .unavailable:
+            "Archive Names"
+        case .notDetermined:
+            "Contacts Not Requested"
+        case .restricted:
+            "Contacts Restricted"
+        case .denied:
+            "Contacts Off"
+        case .authorized, .limited:
+            "macOS Contacts"
+        }
+    }
+
+    public var symbolName: String {
+        switch self {
+        case .unavailable:
+            "text.quote"
+        case .notDetermined:
+            "person.crop.circle.badge.questionmark"
+        case .restricted, .denied:
+            "person.crop.circle.badge.xmark"
+        case .authorized, .limited:
+            "person.crop.circle.badge.checkmark"
+        }
+    }
+
+    public var usesContacts: Bool {
+        switch self {
+        case .authorized, .limited:
+            true
+        case .unavailable, .notDetermined, .restricted, .denied:
+            false
+        }
+    }
+}
+
 public protocol MessagesLoadErrorPresentable {
     var failureTitle: String { get }
     var failureCode: String { get }
@@ -165,8 +211,15 @@ public enum ContentMode: String, CaseIterable, Identifiable, Sendable {
 
     public var label: String {
         switch self {
-        case .transcript: "Transcript"
-        case .media: "Media"
+        case .transcript: "Messages"
+        case .media: "Shared Media"
+        }
+    }
+
+    public var symbolName: String {
+        switch self {
+        case .transcript: "message"
+        case .media: "photo.on.rectangle.angled"
         }
     }
 }
@@ -281,7 +334,7 @@ public final class AppModel {
     public private(set) var selectedPersonArchiveID: String?
     public var selectedMessageID: UUID?
     public var selectedMediaAssetID: UUID?
-    public var sidebarMode: SidebarMode = .threads
+    public var sidebarMode: SidebarMode = .people
     public var searchText = ""
     public var searchScope: SearchScope = .all
     public var contentMode: ContentMode = .transcript
@@ -571,10 +624,17 @@ public final class AppModel {
         guard let summary = selectedArchiveSummary else { return "" }
         let firstYear = selectedArchiveDetail?.messageIndex.first.map { calendar.component(.year, from: $0.sentAt) }
         let lastYear = selectedArchiveDetail?.messageIndex.last.map { calendar.component(.year, from: $0.sentAt) }
+        let descriptor: String
+
+        switch summary.kind {
+        case .person:
+            descriptor = summary.conversationIDs.count > 1 ? "Combined conversation history" : "Conversation history"
+        case .thread:
+            descriptor = summary.participants.count > 2 ? "Group conversation" : "Conversation history"
+        }
 
         if let firstYear, let lastYear {
-            let label = summary.kind == .person ? "Merged archive" : "Messages archive"
-            return "\(label) • \(firstYear)-\(lastYear)"
+            return "\(descriptor) • \(firstYear)-\(lastYear)"
         }
 
         return summary.secondaryText
@@ -596,11 +656,41 @@ public final class AppModel {
 
         switch handles.count {
         case 0:
-            return "No linked handles"
+            return "No addresses"
         case 1:
-            return "1 linked handle"
+            return "1 address"
         default:
-            return "\(handles.count) linked handles"
+            return "\(handles.count) addresses"
+        }
+    }
+
+    public var archiveHandles: [String] {
+        selectedArchiveSummary?.linkedHandles ?? []
+    }
+
+    public var contactIdentityAccessState: ContactIdentityAccessState {
+        contactIdentityResolver.accessState
+    }
+
+    public var selectedArchiveUsesContactIdentity: Bool {
+        guard let summary = selectedArchiveSummary else { return false }
+        return summary.linkedHandles.contains { handle in
+            contactIdentityResolver.contactIdentityKey(for: handle) != nil
+        }
+    }
+
+    public var archiveIdentitySourceSummary: String {
+        switch contactIdentityAccessState {
+        case .authorized, .limited:
+            return selectedArchiveUsesContactIdentity ? "Using names from macOS Contacts" : "No matching card in Contacts"
+        case .denied:
+            return "Contacts access is turned off"
+        case .restricted:
+            return "Contacts access is restricted on this Mac"
+        case .notDetermined:
+            return "Contacts access has not been requested yet"
+        case .unavailable:
+            return "Showing archived names only"
         }
     }
 
@@ -2127,23 +2217,28 @@ public final class AppModel {
     }
 }
 
+@MainActor
 protocol ContactIdentityResolving: AnyObject {
+    var accessState: ContactIdentityAccessState { get }
     func prepare(for strategy: SourceStrategy) async
     func resolvedParticipant(_ participant: Participant) -> Participant
     func resolvedConversationTitle(for conversation: Conversation, participants: [Participant]) -> String
     func contactIdentityKey(for handle: String) -> String?
 }
 
+@MainActor
 final class SystemContactIdentityResolver: ContactIdentityResolving {
     private struct Match {
         let contactKey: String
         let displayName: String
     }
 
+    private(set) var accessState: ContactIdentityAccessState = .notDetermined
     private var matchesByHandle: [String: Match] = [:]
 
     func prepare(for strategy: SourceStrategy) async {
         guard strategy == .liveBrowse else {
+            accessState = .unavailable
             matchesByHandle = [:]
             return
         }
@@ -2151,21 +2246,34 @@ final class SystemContactIdentityResolver: ContactIdentityResolving {
         let store = CNContactStore()
         switch CNContactStore.authorizationStatus(for: .contacts) {
         case .authorized:
+            accessState = .authorized
+            break
+        case .limited:
+            accessState = .limited
             break
         case .notDetermined:
+            accessState = .notDetermined
             let granted = await withCheckedContinuation { continuation in
                 store.requestAccess(for: .contacts) { granted, _ in
                     continuation.resume(returning: granted)
                 }
             }
             guard granted else {
+                accessState = .denied
                 matchesByHandle = [:]
                 return
             }
-        case .denied, .restricted:
+            accessState = .authorized
+        case .denied:
+            accessState = .denied
+            matchesByHandle = [:]
+            return
+        case .restricted:
+            accessState = .restricted
             matchesByHandle = [:]
             return
         @unknown default:
+            accessState = .unavailable
             matchesByHandle = [:]
             return
         }
@@ -2174,15 +2282,29 @@ final class SystemContactIdentityResolver: ContactIdentityResolving {
     }
 
     func resolvedParticipant(_ participant: Participant) -> Participant {
-        guard participant.handle != "me",
-              let match = match(for: participant.handle),
-              participant.displayName != match.displayName else {
+        guard participant.handle != "me" else {
+            return participant
+        }
+
+        if let match = match(for: participant.handle),
+           participant.displayName != match.displayName {
+            return Participant(
+                id: participant.id,
+                displayName: match.displayName,
+                handle: participant.handle,
+                accentColorName: participant.accentColorName
+            )
+        }
+
+        let fallbackDisplayName = fallbackDisplayName(for: participant.handle)
+        guard let fallbackDisplayName,
+              participant.displayName == participant.handle || looksLikeRawHandle(participant.displayName) else {
             return participant
         }
 
         return Participant(
             id: participant.id,
-            displayName: match.displayName,
+            displayName: fallbackDisplayName,
             handle: participant.handle,
             accentColorName: participant.accentColorName
         )
@@ -2290,6 +2412,24 @@ final class SystemContactIdentityResolver: ContactIdentityResolving {
         let digits = value.filter(\.isNumber)
         let letters = value.unicodeScalars.filter { CharacterSet.letters.contains($0) }.count
         return digits.count >= 7 && letters == 0
+    }
+
+    private func fallbackDisplayName(for handle: String) -> String? {
+        let trimmed = handle.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+
+        if let emailLocalPart = trimmed.split(separator: "@", maxSplits: 1).first, trimmed.contains("@") {
+            let formatted = emailLocalPart
+                .split(whereSeparator: { [".", "_", "-", "+"].contains($0) })
+                .map { token in
+                    token.prefix(1).uppercased() + token.dropFirst().lowercased()
+                }
+                .joined(separator: " ")
+
+            return formatted.isEmpty ? nil : formatted
+        }
+
+        return nil
     }
 }
 

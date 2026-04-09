@@ -51,7 +51,7 @@ struct TranscriptView: View {
                             }
                         }
                     }
-                    .frame(maxWidth: 980)
+                    .frame(maxWidth: 920)
                     .padding(.horizontal, AppChrome.panePadding)
                     .padding(.bottom, AppChrome.panePadding)
 
@@ -63,7 +63,6 @@ struct TranscriptView: View {
                     }
                 }
             }
-            .background(AppTheme.contentBackground)
             .onChange(of: appModel.scrollTargetMessageID) { _, newValue in
                 guard let newValue else { return }
                 proxy.scrollTo(newValue, anchor: .center)
@@ -81,10 +80,9 @@ private struct TranscriptSectionHeader: View {
             .foregroundStyle(AppTheme.metadataText)
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
-            .background(AppTheme.secondarySurface, in: Capsule())
+            .background(.regularMaterial, in: Capsule())
             .padding(.vertical, AppChrome.spacing8)
             .frame(maxWidth: .infinity)
-            .background(AppTheme.contentBackground)
     }
 }
 

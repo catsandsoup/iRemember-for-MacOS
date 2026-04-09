@@ -1,0 +1,72 @@
+{
+  "source": "/Users/monty/Documents/GitHub/iRemember/iRemember/Views/TranscriptView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Jump to Original",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 192
+        }
+      },
+      {
+        "comment": "",
+        "key": "Copy Message",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 194
+        }
+      },
+      {
+        "comment": "",
+        "key": "Jump to original message",
+        "location": {
+          "startingColumn": 15,
+          "startingLine": 364
+        }
+      },
+      {
+        "comment": "",
+        "key": "Jump to Original",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 366
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@: %@",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 441
+        }
+      },
+      {
+        "comment": "",
+        "key": "Inspect Media",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 445
+        }
+      },
+      {
+        "comment": "",
+        "key": "Original unavailable on this Mac",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 478
+        }
+      },
+      {
+        "comment": "",
+        "key": "Reveal in Finder",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 487
+        }
+      }
+    ]
+  },
+  "version": 1
+}

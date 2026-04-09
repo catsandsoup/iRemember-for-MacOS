@@ -31,6 +31,7 @@ struct IRememberApp: App {
                 }
         }
         .defaultSize(width: 1320, height: 860)
+        .windowToolbarStyle(.unified)
         .defaultWindowPlacement { content, context in
             let displayBounds = context.defaultDisplay.visibleRect
             let size = fittedMainWindowSize(for: content.sizeThatFits(.unspecified), in: displayBounds)
@@ -65,13 +66,13 @@ struct IRememberApp: App {
 
                 Divider()
 
-                Button("View by Threads") {
+                Button("Browse by Conversation") {
                     Task { await appModel.setSidebarMode(.threads) }
                 }
                 .keyboardShortcut("1", modifiers: [.command, .option])
                 .disabled(appModel.accessState != .ready)
 
-                Button("View by People") {
+                Button("Browse by Contact") {
                     Task { await appModel.setSidebarMode(.people) }
                 }
                 .keyboardShortcut("2", modifiers: [.command, .option])
@@ -123,13 +124,13 @@ struct IRememberApp: App {
 
                 Divider()
 
-                Button("Show Transcript") {
+                Button("Show Messages") {
                     appModel.contentMode = .transcript
                 }
                 .keyboardShortcut("3", modifiers: [.command])
                 .disabled(appModel.accessState != .ready)
 
-                Button("Show Media Browser") {
+                Button("Show Shared Media") {
                     appModel.contentMode = .media
                 }
                 .keyboardShortcut("4", modifiers: [.command])

@@ -1,0 +1,24 @@
+{
+  "source": "/Users/monty/Documents/GitHub/iRemember/iRemember/Views/ConversationContentView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Choose a contact or conversation from the sidebar to browse messages, media, and details.",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 14
+        }
+      },
+      {
+        "comment": "",
+        "key": "Select a Conversation",
+        "location": {
+          "startingColumn": 21,
+          "startingLine": 12
+        }
+      }
+    ]
+  },
+  "version": 1
+}

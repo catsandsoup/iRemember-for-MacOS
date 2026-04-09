@@ -1,0 +1,23 @@
+{
+  "/Users/monty/Documents/GitHub/iRemember/iRemember/Core/MessagesDatabase.swift" : {
+    "const-values" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/MessagesDatabase.swiftconstvalues",
+    "dependencies" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/MessagesDatabase.d",
+    "diagnostics" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/MessagesDatabase.dia",
+    "object" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/MessagesDatabase.o",
+    "swift-dependencies" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/MessagesDatabase.swiftdeps"
+  },
+  "/Users/monty/Documents/GitHub/iRemember/iRemember/Core/Models.swift" : {
+    "const-values" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/Models.swiftconstvalues",
+    "dependencies" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/Models.d",
+    "diagnostics" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/Models.dia",
+    "object" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/Models.o",
+    "swift-dependencies" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/Models.swiftdeps"
+  },
+  "/Users/monty/Documents/GitHub/iRemember/iRemember/Core/Persistence.swift" : {
+    "const-values" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/Persistence.swiftconstvalues",
+    "dependencies" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/Persistence.d",
+    "diagnostics" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/Persistence.dia",
+    "object" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/Persistence.o",
+    "swift-dependencies" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/Persistence.swiftdeps"
+  }
+}

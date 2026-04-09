@@ -9,11 +9,17 @@ enum SnapshotExportController {
         }
 
         let outputDirectory = URL(fileURLWithPath: ProcessInfo.processInfo.environment["IREMEMBER_SNAPSHOT_DIR"] ?? NSTemporaryDirectory(), isDirectory: true)
+        let snapshotSource = ProcessInfo.processInfo.environment["IREMEMBER_SNAPSHOT_SOURCE"] ?? "sample"
 
         do {
             try FileManager.default.createDirectory(at: outputDirectory, withIntermediateDirectories: true)
 
-            await appModel.loadSampleLibrary()
+            switch snapshotSource {
+            case "live":
+                await appModel.loadPrimaryLibrary()
+            default:
+                await appModel.loadSampleLibrary()
+            }
             try await Task.sleep(for: .milliseconds(240))
 
             appModel.isSidebarVisible = true

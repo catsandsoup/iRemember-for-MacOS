@@ -129,8 +129,8 @@ public enum SidebarMode: String, CaseIterable, Identifiable, Sendable {
 
     public var label: String {
         switch self {
-        case .threads: "Threads"
-        case .people: "People"
+        case .threads: "Conversations"
+        case .people: "Contacts"
         }
     }
 }

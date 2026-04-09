@@ -1,0 +1,328 @@
+{
+  "source": "/Users/monty/Documents/GitHub/iRemember/iRemember/Views/RootView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Search messages, people, links, or files",
+        "location": {
+          "startingColumn": 21,
+          "startingLine": 63
+        }
+      },
+      {
+        "comment": "",
+        "key": "View",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 100
+        }
+      },
+      {
+        "comment": "",
+        "key": "Jump to Date",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 110
+        }
+      },
+      {
+        "comment": "",
+        "key": "Hide Details",
+        "location": {
+          "startingColumn": 50,
+          "startingLine": 118
+        }
+      },
+      {
+        "comment": "",
+        "key": "Show Details",
+        "location": {
+          "startingColumn": 67,
+          "startingLine": 118
+        }
+      },
+      {
+        "comment": "",
+        "key": "Hide conversation details",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 123
+        }
+      },
+      {
+        "comment": "",
+        "key": "Show conversation details",
+        "location": {
+          "startingColumn": 79,
+          "startingLine": 123
+        }
+      },
+      {
+        "comment": "",
+        "key": "iRemember",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 145
+        }
+      },
+      {
+        "comment": "",
+        "key": "Export Conversation",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 156
+        }
+      },
+      {
+        "comment": "",
+        "key": "Export Loaded Range",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 160
+        }
+      },
+      {
+        "comment": "",
+        "key": "Export JSON Archive",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 164
+        }
+      },
+      {
+        "comment": "",
+        "key": "Export DOCX",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 168
+        }
+      },
+      {
+        "comment": "",
+        "key": "Export Shared Content",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 172
+        }
+      },
+      {
+        "comment": "",
+        "key": "Export",
+        "location": {
+          "startingColumn": 19,
+          "startingLine": 176
+        }
+      },
+      {
+        "comment": "",
+        "key": "Export Archive",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 188
+        }
+      },
+      {
+        "comment": "",
+        "key": "Format",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 191
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scope",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 198
+        }
+      },
+      {
+        "comment": "",
+        "key": "Include",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 211
+        }
+      },
+      {
+        "comment": "",
+        "key": "From",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 206
+        }
+      },
+      {
+        "comment": "",
+        "key": "To",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 207
+        }
+      },
+      {
+        "comment": "",
+        "key": "Messages",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 213
+        }
+      },
+      {
+        "comment": "",
+        "key": "Photos",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 214
+        }
+      },
+      {
+        "comment": "",
+        "key": "Links",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 215
+        }
+      },
+      {
+        "comment": "",
+        "key": "Attachments",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 216
+        }
+      },
+      {
+        "comment": "",
+        "key": "Reactions",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 217
+        }
+      },
+      {
+        "comment": "",
+        "key": "Timestamps",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 218
+        }
+      },
+      {
+        "comment": "",
+        "key": "Participants",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 219
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancel",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 234
+        }
+      },
+      {
+        "comment": "",
+        "key": "Export",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 238
+        }
+      },
+      {
+        "comment": "",
+        "key": "If your Mac keeps a very large Messages history, the conversation scan can take a while on first open.",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 287
+        }
+      },
+      {
+        "comment": "",
+        "key": "Current step %lld of %lld",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 278
+        }
+      },
+      {
+        "comment": "",
+        "key": "Use Sample Library Instead",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 298
+        }
+      },
+      {
+        "comment": "",
+        "key": "Jump to Date",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 322
+        }
+      },
+      {
+        "comment": "",
+        "key": "The transcript window is repositioned around the closest indexed message without preloading the full thread.",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 332
+        }
+      },
+      {
+        "comment": "",
+        "key": "Target date",
+        "location": {
+          "startingColumn": 17,
+          "startingLine": 326
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancel",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 339
+        }
+      },
+      {
+        "comment": "",
+        "key": "Jump",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 343
+        }
+      },
+      {
+        "comment": "",
+        "key": "Try Again",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 407
+        }
+      },
+      {
+        "comment": "",
+        "key": "Use Sample Library",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 415
+        }
+      },
+      {
+        "comment": "",
+        "key": "App Settings",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 423
+        }
+      }
+    ]
+  },
+  "version": 1
+}

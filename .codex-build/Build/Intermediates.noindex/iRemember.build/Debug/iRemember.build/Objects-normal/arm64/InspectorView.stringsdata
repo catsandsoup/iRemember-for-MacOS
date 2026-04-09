@@ -1,0 +1,152 @@
+{
+  "source": "/Users/monty/Documents/GitHub/iRemember/iRemember/Views/InspectorView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Conversation details appear here when you select a contact, conversation, or shared item.",
+        "location": {
+          "startingColumn": 43,
+          "startingLine": 45
+        }
+      },
+      {
+        "comment": "",
+        "key": "No Selection",
+        "location": {
+          "startingColumn": 25,
+          "startingLine": 43
+        }
+      },
+      {
+        "comment": "",
+        "key": "No shared media has been indexed for this conversation yet.",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 139
+        }
+      },
+      {
+        "comment": "",
+        "key": "Browse Shared Media",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 158
+        }
+      },
+      {
+        "comment": "",
+        "key": "Open shared media",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 154
+        }
+      },
+      {
+        "comment": "",
+        "key": "Exports are also available from File and conversation context menus.",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 210
+        }
+      },
+      {
+        "comment": "",
+        "key": "Export Conversation…",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 186
+        }
+      },
+      {
+        "comment": "",
+        "key": "Export Shared Content…",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 191
+        }
+      },
+      {
+        "comment": "",
+        "key": "More Export Options",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 196
+        }
+      },
+      {
+        "comment": "",
+        "key": "Export Loaded Range as PDF",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 197
+        }
+      },
+      {
+        "comment": "",
+        "key": "Export JSON Archive",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 201
+        }
+      },
+      {
+        "comment": "",
+        "key": "Export DOCX",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 205
+        }
+      },
+      {
+        "comment": "",
+        "key": "This conversation appears to belong to the same contact as another archive in your library.",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 249
+        }
+      },
+      {
+        "comment": "",
+        "key": "Open Contact View",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 260
+        }
+      },
+      {
+        "comment": "",
+        "key": "Keep Separate",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 265
+        }
+      },
+      {
+        "comment": "",
+        "key": "Always Merge This Contact",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 270
+        }
+      },
+      {
+        "comment": "",
+        "key": "Open Media",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 315
+        }
+      },
+      {
+        "comment": "",
+        "key": "Show in Conversation",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 320
+        }
+      }
+    ]
+  },
+  "version": 1
+}

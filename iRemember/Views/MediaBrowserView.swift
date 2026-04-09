@@ -67,10 +67,8 @@ struct MediaBrowserView: View {
                     .padding(24)
                 }
             }
-            .background(AppTheme.contentBackground)
             .animation(.smooth(duration: 0.2), value: appModel.mediaFilter)
         }
-        .background(AppTheme.chromeBackground)
     }
 }
 

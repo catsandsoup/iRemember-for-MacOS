@@ -1,0 +1,64 @@
+{
+  "source": "/Users/monty/Documents/GitHub/iRemember/iRemember/Views/MediaBrowserView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "%@ items",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 24
+        }
+      },
+      {
+        "comment": "",
+        "key": "Media Filter",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 14
+        }
+      },
+      {
+        "comment": "",
+        "key": "This archive does not have media that matches the current filter.",
+        "location": {
+          "startingColumn": 43,
+          "startingLine": 39
+        }
+      },
+      {
+        "comment": "",
+        "key": "No Shared Media",
+        "location": {
+          "startingColumn": 25,
+          "startingLine": 37
+        }
+      },
+      {
+        "comment": "",
+        "key": "Open Media",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 53
+        }
+      },
+      {
+        "comment": "",
+        "key": "Reveal in Transcript",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 56
+        }
+      },
+      {
+        "comment": "",
+        "key": "Reveal in Finder",
+        "location": {
+          "startingColumn": 44,
+          "startingLine": 60
+        }
+      }
+    ]
+  },
+  "version": 1
+}

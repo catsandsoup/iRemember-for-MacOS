@@ -24,7 +24,7 @@ struct SidebarView: View {
             }
         }
         .listStyle(.sidebar)
-        .navigationSplitViewColumnWidth(min: 250, ideal: 290, max: 340)
+        .navigationSplitViewColumnWidth(min: 220, ideal: 260, max: 300)
         .onChange(of: appModel.searchText) { _, _ in
             appModel.persistSessionIfPossible()
         }
@@ -60,7 +60,7 @@ struct SidebarView: View {
         }
 
         if !standardArchives.isEmpty {
-            Section(pinnedArchives.isEmpty ? "Conversations" : "All Conversations") {
+            Section(primarySectionTitle) {
                 ForEach(standardArchives) { archive in
                     ArchiveRow(
                         archive: archive,
@@ -84,9 +84,18 @@ struct SidebarView: View {
         }
     }
 
+    private var primarySectionTitle: String {
+        switch appModel.sidebarMode {
+        case .threads:
+            "Recent Conversations"
+        case .people:
+            "Recent Contacts"
+        }
+    }
+
     @ViewBuilder
     private var searchResultsContent: some View {
-        Section("Search Results") {
+        Section {
             if appModel.isSearching {
                 ProgressView("Searching")
                     .padding(.vertical, AppChrome.spacing8)
@@ -103,6 +112,8 @@ struct SidebarView: View {
                     }
                 }
             }
+        } header: {
+            SearchResultsHeader(searchScope: $appModel.searchScope)
         }
     }
 
@@ -120,6 +131,31 @@ struct SidebarView: View {
     }
 }
 
+private struct SearchResultsHeader: View {
+    @Binding var searchScope: SearchScope
+
+    var body: some View {
+        HStack {
+            Text("Search Results")
+
+            Spacer()
+
+            Menu {
+                Picker("Search In", selection: $searchScope) {
+                    ForEach(SearchScope.allCases) { scope in
+                        Text(scope.label).tag(scope)
+                    }
+                }
+            } label: {
+                Label("Search In", systemImage: "line.3.horizontal.decrease.circle")
+                    .labelStyle(.iconOnly)
+            }
+            .menuStyle(.borderlessButton)
+            .help("Change search scope")
+        }
+    }
+}
+
 private struct ArchiveRow: View {
     let archive: ArchiveSummary
     let isSelected: Bool
@@ -130,7 +166,7 @@ private struct ArchiveRow: View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text(archive.title)
-                    .font(.headline)
+                    .font(.body.weight(.medium))
                     .lineLimit(1)
 
                 if archive.isPinned {
@@ -148,9 +184,9 @@ private struct ArchiveRow: View {
             }
 
             Text(archive.secondaryText)
-                .font(.subheadline)
+                .font(.callout)
                 .foregroundStyle(.secondary)
-                .lineLimit(2)
+                .lineLimit(1)
         }
         .padding(.vertical, 4)
         .contextMenu {

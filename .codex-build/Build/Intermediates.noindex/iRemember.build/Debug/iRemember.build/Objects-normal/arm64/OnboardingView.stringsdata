@@ -1,0 +1,48 @@
+{
+  "source": "/Users/monty/Documents/GitHub/iRemember/iRemember/Views/OnboardingView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Open your Messages library",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 13
+        }
+      },
+      {
+        "comment": "",
+        "key": "Open Messages Library",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 47
+        }
+      },
+      {
+        "comment": "",
+        "key": "Use Sample Library",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 56
+        }
+      },
+      {
+        "comment": "",
+        "key": "If you launch from Xcode during development, Xcode also needs Full Disk Access.",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 70
+        }
+      },
+      {
+        "comment": "",
+        "key": "App Settings",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 66
+        }
+      }
+    ]
+  },
+  "version": 1
+}

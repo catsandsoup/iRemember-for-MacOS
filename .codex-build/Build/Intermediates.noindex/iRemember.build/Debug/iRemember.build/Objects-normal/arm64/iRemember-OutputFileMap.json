@@ -1,0 +1,229 @@
+{
+  "" : {
+    "diagnostics" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/iRemember-primary.dia",
+    "emit-module-dependencies" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/iRemember-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/iRemember-primary-emit-module.dia",
+    "pch" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/iRemember-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/iRemember-primary.swiftdeps"
+  },
+  "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/DerivedSources/GeneratedAssetSymbols.swift" : {
+    "const-values" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/GeneratedAssetSymbols.swiftconstvalues",
+    "dependencies" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/GeneratedAssetSymbols.d",
+    "diagnostics" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/GeneratedAssetSymbols.dia",
+    "index-unit-output-path" : "/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/GeneratedAssetSymbols.o",
+    "llvm-bc" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/GeneratedAssetSymbols.bc",
+    "object" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/GeneratedAssetSymbols.o",
+    "swift-dependencies" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/GeneratedAssetSymbols.swiftdeps",
+    "swiftmodule" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/GeneratedAssetSymbols~partial.swiftmodule"
+  },
+  "/Users/monty/Documents/GitHub/iRemember/iRemember/Core/MessagesDatabase.swift" : {
+    "const-values" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/MessagesDatabase.swiftconstvalues",
+    "dependencies" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/MessagesDatabase.d",
+    "diagnostics" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/MessagesDatabase.dia",
+    "index-unit-output-path" : "/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/MessagesDatabase.o",
+    "llvm-bc" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/MessagesDatabase.bc",
+    "object" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/MessagesDatabase.o",
+    "swift-dependencies" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/MessagesDatabase.swiftdeps",
+    "swiftmodule" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/MessagesDatabase~partial.swiftmodule"
+  },
+  "/Users/monty/Documents/GitHub/iRemember/iRemember/Core/Models.swift" : {
+    "const-values" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/Models.swiftconstvalues",
+    "dependencies" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/Models.d",
+    "diagnostics" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/Models.dia",
+    "index-unit-output-path" : "/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/Models.o",
+    "llvm-bc" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/Models.bc",
+    "object" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/Models.o",
+    "swift-dependencies" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/Models.swiftdeps",
+    "swiftmodule" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/Models~partial.swiftmodule"
+  },
+  "/Users/monty/Documents/GitHub/iRemember/iRemember/Core/Persistence.swift" : {
+    "const-values" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/Persistence.swiftconstvalues",
+    "dependencies" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/Persistence.d",
+    "diagnostics" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/Persistence.dia",
+    "index-unit-output-path" : "/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/Persistence.o",
+    "llvm-bc" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/Persistence.bc",
+    "object" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/Persistence.o",
+    "swift-dependencies" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/Persistence.swiftdeps",
+    "swiftmodule" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/Persistence~partial.swiftmodule"
+  },
+  "/Users/monty/Documents/GitHub/iRemember/iRemember/Core/SQLiteMessagesSource.swift" : {
+    "const-values" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/SQLiteMessagesSource.swiftconstvalues",
+    "dependencies" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/SQLiteMessagesSource.d",
+    "diagnostics" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/SQLiteMessagesSource.dia",
+    "index-unit-output-path" : "/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/SQLiteMessagesSource.o",
+    "llvm-bc" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/SQLiteMessagesSource.bc",
+    "object" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/SQLiteMessagesSource.o",
+    "swift-dependencies" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/SQLiteMessagesSource.swiftdeps",
+    "swiftmodule" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/SQLiteMessagesSource~partial.swiftmodule"
+  },
+  "/Users/monty/Documents/GitHub/iRemember/iRemember/Core/Services.swift" : {
+    "const-values" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/Services.swiftconstvalues",
+    "dependencies" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/Services.d",
+    "diagnostics" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/Services.dia",
+    "index-unit-output-path" : "/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/Services.o",
+    "llvm-bc" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/Services.bc",
+    "object" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/Services.o",
+    "swift-dependencies" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/Services.swiftdeps",
+    "swiftmodule" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/Services~partial.swiftmodule"
+  },
+  "/Users/monty/Documents/GitHub/iRemember/iRemember/Core/Telemetry.swift" : {
+    "const-values" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/Telemetry.swiftconstvalues",
+    "dependencies" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/Telemetry.d",
+    "diagnostics" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/Telemetry.dia",
+    "index-unit-output-path" : "/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/Telemetry.o",
+    "llvm-bc" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/Telemetry.bc",
+    "object" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/Telemetry.o",
+    "swift-dependencies" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/Telemetry.swiftdeps",
+    "swiftmodule" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/Telemetry~partial.swiftmodule"
+  },
+  "/Users/monty/Documents/GitHub/iRemember/iRemember/SnapshotExportController.swift" : {
+    "const-values" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/SnapshotExportController.swiftconstvalues",
+    "dependencies" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/SnapshotExportController.d",
+    "diagnostics" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/SnapshotExportController.dia",
+    "index-unit-output-path" : "/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/SnapshotExportController.o",
+    "llvm-bc" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/SnapshotExportController.bc",
+    "object" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/SnapshotExportController.o",
+    "swift-dependencies" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/SnapshotExportController.swiftdeps",
+    "swiftmodule" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/SnapshotExportController~partial.swiftmodule"
+  },
+  "/Users/monty/Documents/GitHub/iRemember/iRemember/Views/AppChrome.swift" : {
+    "const-values" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/AppChrome.swiftconstvalues",
+    "dependencies" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/AppChrome.d",
+    "diagnostics" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/AppChrome.dia",
+    "index-unit-output-path" : "/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/AppChrome.o",
+    "llvm-bc" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/AppChrome.bc",
+    "object" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/AppChrome.o",
+    "swift-dependencies" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/AppChrome.swiftdeps",
+    "swiftmodule" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/AppChrome~partial.swiftmodule"
+  },
+  "/Users/monty/Documents/GitHub/iRemember/iRemember/Views/AttachmentThumbnailView.swift" : {
+    "const-values" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/AttachmentThumbnailView.swiftconstvalues",
+    "dependencies" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/AttachmentThumbnailView.d",
+    "diagnostics" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/AttachmentThumbnailView.dia",
+    "index-unit-output-path" : "/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/AttachmentThumbnailView.o",
+    "llvm-bc" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/AttachmentThumbnailView.bc",
+    "object" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/AttachmentThumbnailView.o",
+    "swift-dependencies" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/AttachmentThumbnailView.swiftdeps",
+    "swiftmodule" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/AttachmentThumbnailView~partial.swiftmodule"
+  },
+  "/Users/monty/Documents/GitHub/iRemember/iRemember/Views/ConversationContentView.swift" : {
+    "const-values" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/ConversationContentView.swiftconstvalues",
+    "dependencies" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/ConversationContentView.d",
+    "diagnostics" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/ConversationContentView.dia",
+    "index-unit-output-path" : "/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/ConversationContentView.o",
+    "llvm-bc" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/ConversationContentView.bc",
+    "object" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/ConversationContentView.o",
+    "swift-dependencies" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/ConversationContentView.swiftdeps",
+    "swiftmodule" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/ConversationContentView~partial.swiftmodule"
+  },
+  "/Users/monty/Documents/GitHub/iRemember/iRemember/Views/ConversationTimelineView.swift" : {
+    "const-values" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/ConversationTimelineView.swiftconstvalues",
+    "dependencies" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/ConversationTimelineView.d",
+    "diagnostics" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/ConversationTimelineView.dia",
+    "index-unit-output-path" : "/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/ConversationTimelineView.o",
+    "llvm-bc" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/ConversationTimelineView.bc",
+    "object" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/ConversationTimelineView.o",
+    "swift-dependencies" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/ConversationTimelineView.swiftdeps",
+    "swiftmodule" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/ConversationTimelineView~partial.swiftmodule"
+  },
+  "/Users/monty/Documents/GitHub/iRemember/iRemember/Views/InspectorView.swift" : {
+    "const-values" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/InspectorView.swiftconstvalues",
+    "dependencies" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/InspectorView.d",
+    "diagnostics" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/InspectorView.dia",
+    "index-unit-output-path" : "/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/InspectorView.o",
+    "llvm-bc" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/InspectorView.bc",
+    "object" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/InspectorView.o",
+    "swift-dependencies" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/InspectorView.swiftdeps",
+    "swiftmodule" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/InspectorView~partial.swiftmodule"
+  },
+  "/Users/monty/Documents/GitHub/iRemember/iRemember/Views/MediaBrowserView.swift" : {
+    "const-values" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/MediaBrowserView.swiftconstvalues",
+    "dependencies" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/MediaBrowserView.d",
+    "diagnostics" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/MediaBrowserView.dia",
+    "index-unit-output-path" : "/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/MediaBrowserView.o",
+    "llvm-bc" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/MediaBrowserView.bc",
+    "object" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/MediaBrowserView.o",
+    "swift-dependencies" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/MediaBrowserView.swiftdeps",
+    "swiftmodule" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/MediaBrowserView~partial.swiftmodule"
+  },
+  "/Users/monty/Documents/GitHub/iRemember/iRemember/Views/MediaViewerSheet.swift" : {
+    "const-values" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/MediaViewerSheet.swiftconstvalues",
+    "dependencies" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/MediaViewerSheet.d",
+    "diagnostics" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/MediaViewerSheet.dia",
+    "index-unit-output-path" : "/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/MediaViewerSheet.o",
+    "llvm-bc" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/MediaViewerSheet.bc",
+    "object" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/MediaViewerSheet.o",
+    "swift-dependencies" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/MediaViewerSheet.swiftdeps",
+    "swiftmodule" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/MediaViewerSheet~partial.swiftmodule"
+  },
+  "/Users/monty/Documents/GitHub/iRemember/iRemember/Views/OnboardingView.swift" : {
+    "const-values" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/OnboardingView.swiftconstvalues",
+    "dependencies" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/OnboardingView.d",
+    "diagnostics" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/OnboardingView.dia",
+    "index-unit-output-path" : "/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/OnboardingView.o",
+    "llvm-bc" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/OnboardingView.bc",
+    "object" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/OnboardingView.o",
+    "swift-dependencies" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/OnboardingView.swiftdeps",
+    "swiftmodule" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/OnboardingView~partial.swiftmodule"
+  },
+  "/Users/monty/Documents/GitHub/iRemember/iRemember/Views/RootView.swift" : {
+    "const-values" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/RootView.swiftconstvalues",
+    "dependencies" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/RootView.d",
+    "diagnostics" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/RootView.dia",
+    "index-unit-output-path" : "/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/RootView.o",
+    "llvm-bc" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/RootView.bc",
+    "object" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/RootView.o",
+    "swift-dependencies" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/RootView.swiftdeps",
+    "swiftmodule" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/RootView~partial.swiftmodule"
+  },
+  "/Users/monty/Documents/GitHub/iRemember/iRemember/Views/SettingsView.swift" : {
+    "const-values" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/SettingsView.swiftconstvalues",
+    "dependencies" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/SettingsView.d",
+    "diagnostics" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/SettingsView.dia",
+    "index-unit-output-path" : "/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/SettingsView.o",
+    "llvm-bc" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/SettingsView.bc",
+    "object" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/SettingsView.o",
+    "swift-dependencies" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/SettingsView.swiftdeps",
+    "swiftmodule" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/SettingsView~partial.swiftmodule"
+  },
+  "/Users/monty/Documents/GitHub/iRemember/iRemember/Views/SetupAssistantComponents.swift" : {
+    "const-values" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/SetupAssistantComponents.swiftconstvalues",
+    "dependencies" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/SetupAssistantComponents.d",
+    "diagnostics" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/SetupAssistantComponents.dia",
+    "index-unit-output-path" : "/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/SetupAssistantComponents.o",
+    "llvm-bc" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/SetupAssistantComponents.bc",
+    "object" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/SetupAssistantComponents.o",
+    "swift-dependencies" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/SetupAssistantComponents.swiftdeps",
+    "swiftmodule" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/SetupAssistantComponents~partial.swiftmodule"
+  },
+  "/Users/monty/Documents/GitHub/iRemember/iRemember/Views/SidebarView.swift" : {
+    "const-values" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/SidebarView.swiftconstvalues",
+    "dependencies" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/SidebarView.d",
+    "diagnostics" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/SidebarView.dia",
+    "index-unit-output-path" : "/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/SidebarView.o",
+    "llvm-bc" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/SidebarView.bc",
+    "object" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/SidebarView.o",
+    "swift-dependencies" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/SidebarView.swiftdeps",
+    "swiftmodule" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/SidebarView~partial.swiftmodule"
+  },
+  "/Users/monty/Documents/GitHub/iRemember/iRemember/Views/TranscriptView.swift" : {
+    "const-values" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/TranscriptView.swiftconstvalues",
+    "dependencies" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/TranscriptView.d",
+    "diagnostics" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/TranscriptView.dia",
+    "index-unit-output-path" : "/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/TranscriptView.o",
+    "llvm-bc" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/TranscriptView.bc",
+    "object" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/TranscriptView.o",
+    "swift-dependencies" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/TranscriptView.swiftdeps",
+    "swiftmodule" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/TranscriptView~partial.swiftmodule"
+  },
+  "/Users/monty/Documents/GitHub/iRemember/iRemember/iRememberApp.swift" : {
+    "const-values" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/iRememberApp.swiftconstvalues",
+    "dependencies" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/iRememberApp.d",
+    "diagnostics" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/iRememberApp.dia",
+    "index-unit-output-path" : "/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/iRememberApp.o",
+    "llvm-bc" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/iRememberApp.bc",
+    "object" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/iRememberApp.o",
+    "swift-dependencies" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/iRememberApp.swiftdeps",
+    "swiftmodule" : "/Users/monty/Documents/GitHub/iRemember/.codex-build/Build/Intermediates.noindex/iRemember.build/Debug/iRemember.build/Objects-normal/arm64/iRememberApp~partial.swiftmodule"
+  }
+}
