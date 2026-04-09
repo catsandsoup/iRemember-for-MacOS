@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 struct MediaBrowserView: View {
@@ -31,26 +32,43 @@ struct MediaBrowserView: View {
             Divider()
 
             ScrollView {
-                LazyVGrid(columns: columns, spacing: 20) {
-                    ForEach(appModel.filteredMediaAssets) { asset in
-                        Button {
-                            appModel.selectedMediaAssetID = asset.id
-                        } label: {
-                            MediaCard(asset: asset, isSelected: appModel.selectedMediaAssetID == asset.id)
-                        }
-                        .buttonStyle(.plain)
-                        .contextMenu {
-                            Button("Reveal in Transcript") {
-                                Task { await appModel.revealMediaInTranscript(asset) }
+                if appModel.filteredMediaAssets.isEmpty {
+                    ContentUnavailableView(
+                        "No Shared Media",
+                        systemImage: "photo.on.rectangle",
+                        description: Text("This archive does not have media that matches the current filter.")
+                    )
+                    .frame(maxWidth: .infinity)
+                    .padding(.top, 48)
+                } else {
+                    LazyVGrid(columns: columns, spacing: 20) {
+                        ForEach(appModel.filteredMediaAssets) { asset in
+                            Button {
+                                appModel.presentMediaViewer(for: asset)
+                            } label: {
+                                MediaCard(asset: asset, isSelected: appModel.selectedMediaAssetID == asset.id)
+                            }
+                            .buttonStyle(.plain)
+                            .contextMenu {
+                                Button("Open Media") {
+                                    appModel.presentMediaViewer(for: asset)
+                                }
+                                Button("Reveal in Transcript") {
+                                    Task { await appModel.revealMediaInTranscript(asset) }
+                                }
+                                if asset.attachment.isAvailableLocally, let fileURL = asset.attachment.fileURL {
+                                    Button("Reveal in Finder") {
+                                        NSWorkspace.shared.activateFileViewerSelecting([fileURL])
+                                    }
+                                }
                             }
                         }
                     }
+                    .padding(24)
                 }
-                .padding(24)
             }
             .background(AppTheme.contentBackground)
             .animation(.smooth(duration: 0.2), value: appModel.mediaFilter)
-            .animation(.smooth(duration: 0.2), value: appModel.searchText)
         }
         .background(AppTheme.chromeBackground)
     }

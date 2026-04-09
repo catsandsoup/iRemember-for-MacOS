@@ -1,80 +1,294 @@
 import SwiftUI
+import SwiftData
 
 struct RootView: View {
+    @Environment(\.modelContext) private var modelContext
     @Bindable var appModel: AppModel
 
     var body: some View {
-        Group {
-            switch appModel.accessState {
-            case .onboarding:
-                OnboardingView(appModel: appModel)
-            case .loading:
-                LibraryLoadingView(appModel: appModel)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-            case .failed(let message):
-                LibraryFailureView(appModel: appModel, message: message)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-            case .ready:
-                mainShell
-            }
-        }
+        rootContent
         .task {
+            appModel.configurePersistence(with: AppPersistenceCoordinator(modelContext: modelContext))
             await appModel.bootstrapIfNeeded()
+        }
+        .task(id: "\(appModel.searchText)|\(appModel.searchScope.rawValue)|\(appModel.sidebarMode.rawValue)") {
+            await appModel.refreshSearchResults()
         }
         .sheet(isPresented: $appModel.isDateJumpPresented) {
             DateJumpSheet(appModel: appModel)
         }
+        .sheet(isPresented: $appModel.isExportSheetPresented) {
+            ExportSheet(appModel: appModel)
+        }
+        .sheet(isPresented: mediaViewerPresented) {
+            MediaViewerSheet(appModel: appModel)
+        }
+        .onChange(of: appModel.isInspectorVisible) { _, _ in
+            appModel.persistSessionIfPossible()
+        }
+        .onChange(of: appModel.contentMode) { _, _ in
+            appModel.persistSessionIfPossible()
+        }
     }
 
-    private var mainShell: some View {
-        HSplitView {
-            if appModel.isSidebarVisible {
-                SidebarView(appModel: appModel)
-                    .frame(minWidth: 236, idealWidth: 268, maxWidth: 308, maxHeight: .infinity)
-                    .accessibilityIdentifier("sidebar-pane")
-            }
+    @ViewBuilder
+    private var rootContent: some View {
+        switch appModel.accessState {
+        case .onboarding:
+            OnboardingView(appModel: appModel)
+        case .loading:
+            LibraryLoadingView(appModel: appModel)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        case .failed(let message):
+            LibraryFailureView(appModel: appModel, message: message)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        case .ready:
+            readyShell
+        }
+    }
 
+    private var readyShell: some View {
+        NavigationSplitView {
+            SidebarView(appModel: appModel)
+                .accessibilityIdentifier("sidebar-pane")
+        } detail: {
             ConversationContentView(appModel: appModel)
-                .frame(minWidth: 640, maxWidth: .infinity, maxHeight: .infinity)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .accessibilityIdentifier("content-pane")
-
-            if appModel.isInspectorVisible {
-                InspectorView(appModel: appModel)
-                    .frame(minWidth: 260, idealWidth: 292, maxWidth: 328, maxHeight: .infinity)
-                    .accessibilityIdentifier("inspector-pane")
-            }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .searchable(text: $appModel.searchText, placement: .toolbar, prompt: "Search transcript or media")
+        .navigationSplitViewStyle(.balanced)
+        .searchable(
+            text: $appModel.searchText,
+            placement: .toolbar,
+            prompt: "Search messages, people, links, or files"
+        )
+        .inspector(isPresented: $appModel.isInspectorVisible) {
+            InspectorView(appModel: appModel)
+                .accessibilityIdentifier("inspector-pane")
+        }
         .toolbar {
-            ToolbarItemGroup(placement: .navigation) {
-                Button {
-                    withAnimation(.smooth(duration: 0.18)) {
-                        appModel.toggleSidebarVisibility()
-                    }
-                } label: {
-                    Label(appModel.isSidebarVisible ? "Hide Sidebar" : "Show Sidebar", systemImage: "sidebar.left")
-                }
-                .help(appModel.isSidebarVisible ? "Hide sidebar" : "Show sidebar")
-                .accessibilityIdentifier("sidebar-toggle")
+            ReadyToolbar(appModel: appModel)
+        }
+        .toolbar(removing: .title)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
 
-                Button {
-                    withAnimation(.smooth(duration: 0.18)) {
-                        appModel.toggleInspectorVisibility()
-                    }
-                } label: {
-                    Label(appModel.isInspectorVisible ? "Hide Inspector" : "Show Inspector", systemImage: "sidebar.right")
+    private var mediaViewerPresented: Binding<Bool> {
+        Binding(
+            get: {
+                appModel.isMediaViewerPresented && appModel.selectedMediaAsset != nil
+            },
+            set: { newValue in
+                if !newValue {
+                    appModel.dismissMediaViewer()
                 }
-                .help(appModel.isInspectorVisible ? "Hide inspector" : "Show inspector")
-                .accessibilityIdentifier("inspector-toggle")
+            }
+        )
+    }
+}
+
+private struct ReadyToolbar: ToolbarContent {
+    @Bindable var appModel: AppModel
+
+    var body: some ToolbarContent {
+        ToolbarItem(placement: .principal) {
+            ArchiveToolbarTitleView(appModel: appModel)
+        }
+
+        ToolbarItemGroup {
+            Picker("Browse Mode", selection: sidebarModeBinding) {
+                ForEach(SidebarMode.allCases) { mode in
+                    Text(mode.label).tag(mode)
+                }
+            }
+            .pickerStyle(.segmented)
+            .frame(width: 150)
+
+            if appModel.selectedArchiveSummary != nil {
+                Picker("Content Mode", selection: $appModel.contentMode) {
+                    ForEach(ContentMode.allCases) { mode in
+                        Text(mode.label).tag(mode)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .frame(width: 168)
+                .accessibilityIdentifier("content-mode-picker")
+            }
+
+            Menu {
+                Picker("Search In", selection: $appModel.searchScope) {
+                    ForEach(SearchScope.allCases) { scope in
+                        Text(scope.label).tag(scope)
+                    }
+                }
+            } label: {
+                Label("Search Scope", systemImage: "line.3.horizontal.decrease.circle")
+            }
+
+            Button("Jump to Date", systemImage: "calendar") {
+                appModel.isDateJumpPresented = true
+            }
+            .labelStyle(.iconOnly)
+            .disabled(appModel.selectedArchiveSummary == nil)
+
+            ExportToolbarMenu(appModel: appModel)
+
+            Button(appModel.isInspectorVisible ? "Hide Details" : "Show Details", systemImage: "info.circle") {
+                appModel.toggleInspectorVisibility()
+            }
+            .buttonBorderShape(.circle)
+            .disabled(appModel.accessState != .ready)
+            .help(appModel.isInspectorVisible ? "Hide conversation details" : "Show conversation details")
+        }
+    }
+
+    private var sidebarModeBinding: Binding<SidebarMode> {
+        Binding(
+            get: { appModel.sidebarMode },
+            set: { newValue in
+                Task { await appModel.setSidebarMode(newValue) }
+            }
+        )
+    }
+}
+
+private struct ArchiveToolbarTitleView: View {
+    @Bindable var appModel: AppModel
+
+    var body: some View {
+        if let archive = appModel.selectedArchiveSummary {
+            Button {
+                appModel.toggleInspectorVisibility()
+            } label: {
+                HStack(spacing: AppChrome.spacing8) {
+                    VStack(spacing: 2) {
+                        Text(archive.title)
+                            .font(.headline)
+                            .lineLimit(1)
+
+                        Text(appModel.currentArchiveSubtitle)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                    }
+
+                    Image(systemName: appModel.isInspectorVisible ? "chevron.right.circle.fill" : "info.circle")
+                        .font(.title3)
+                        .foregroundStyle(.secondary)
+                        .accessibilityHidden(true)
+                }
+                .frame(maxWidth: 360)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .help(appModel.isInspectorVisible ? "Hide conversation details" : "Show conversation details")
+            .accessibilityLabel(appModel.isInspectorVisible ? "Hide conversation details" : "Show conversation details")
+        } else {
+            Text("iRemember")
+                .font(.headline)
+        }
+    }
+}
+
+private struct ExportToolbarMenu: View {
+    @Bindable var appModel: AppModel
+
+    var body: some View {
+        Menu {
+            Button("Export Conversation") {
+                appModel.presentExport(scope: .entireConversation, format: .pdf)
+            }
+
+            Button("Export Loaded Range") {
+                appModel.presentExport(scope: .currentLoadedRange, format: .pdf)
+            }
+
+            Button("Export JSON Archive") {
+                appModel.presentExport(scope: .entireConversation, format: .json)
+            }
+
+            Button("Export DOCX") {
+                appModel.presentExport(scope: .entireConversation, format: .docx)
+            }
+
+            Button("Export Shared Content") {
+                appModel.presentSharedContentExport()
+            }
+        } label: {
+            Label("Export", systemImage: "square.and.arrow.up")
+        }
+        .disabled(appModel.selectedArchiveSummary == nil)
+    }
+}
+
+private struct ExportSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @Bindable var appModel: AppModel
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            Text("Export Archive")
+                .font(.title2.weight(.semibold))
+
+            Picker("Format", selection: $appModel.exportFormat) {
+                ForEach(ExportFormat.allCases) { format in
+                    Text(format.label).tag(format)
+                }
+            }
+            .pickerStyle(.segmented)
+
+            Picker("Scope", selection: $appModel.exportScope) {
+                ForEach(ExportScope.allCases) { scope in
+                    Text(scope.label).tag(scope)
+                }
+            }
+
+            if appModel.exportScope == .customDateRange {
+                HStack(spacing: 12) {
+                    DatePicker("From", selection: $appModel.exportRangeStart, displayedComponents: [.date, .hourAndMinute])
+                    DatePicker("To", selection: $appModel.exportRangeEnd, displayedComponents: [.date, .hourAndMinute])
+                }
+            }
+
+            GroupBox("Include") {
+                VStack(alignment: .leading, spacing: 10) {
+                    Toggle("Messages", isOn: $appModel.exportIncludesMessages)
+                    Toggle("Photos", isOn: $appModel.exportIncludesPhotos)
+                    Toggle("Links", isOn: $appModel.exportIncludesLinks)
+                    Toggle("Attachments", isOn: $appModel.exportIncludesAttachments)
+                    Toggle("Reactions", isOn: $appModel.exportIncludesReactions)
+                    Toggle("Timestamps", isOn: $appModel.exportIncludesTimestamps)
+                    Toggle("Participants", isOn: $appModel.exportIncludesParticipants)
+                }
+                .padding(.top, 4)
+            }
+
+            if let lastExportDescription = appModel.lastExportDescription {
+                Text(lastExportDescription)
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            HStack {
+                Spacer()
+
+                Button("Cancel") {
+                    dismiss()
+                }
+
+                Button("Export") {
+                    Task {
+                        await appModel.performExport()
+                        dismiss()
+                    }
+                }
+                .keyboardShortcut(.defaultAction)
+                .disabled(appModel.selectedArchiveSummary == nil)
             }
         }
-        .animation(.smooth(duration: 0.18), value: appModel.contentMode)
-        .animation(.smooth(duration: 0.18), value: appModel.isSidebarVisible)
-        .animation(.smooth(duration: 0.18), value: appModel.isInspectorVisible)
-        .task(id: appModel.selectedConversationID) {
-            await appModel.loadSelectedConversationIfNeeded()
-        }
+        .padding(24)
+        .frame(width: 520)
     }
 }
 
@@ -173,7 +387,7 @@ private struct DateJumpSheet: View {
                     dismiss()
                 }
                 .keyboardShortcut(.defaultAction)
-                .disabled(appModel.selectedDetail == nil)
+                .disabled(appModel.selectedArchiveDetail == nil)
             }
         }
         .padding(24)

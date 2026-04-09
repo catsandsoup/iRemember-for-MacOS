@@ -1,29 +1,29 @@
 import Foundation
 import SQLite3
 
-struct SQLiteRow {
+nonisolated struct SQLiteRow {
     fileprivate let statement: OpaquePointer
 
-    nonisolated func int64(_ index: Int32) -> Int64? {
+    func int64(_ index: Int32) -> Int64? {
         guard sqlite3_column_type(statement, index) != SQLITE_NULL else { return nil }
         return sqlite3_column_int64(statement, index)
     }
 
-    nonisolated func int(_ index: Int32) -> Int? {
+    func int(_ index: Int32) -> Int? {
         guard sqlite3_column_type(statement, index) != SQLITE_NULL else { return nil }
         return Int(sqlite3_column_int(statement, index))
     }
 
-    nonisolated func bool(_ index: Int32) -> Bool {
+    func bool(_ index: Int32) -> Bool {
         sqlite3_column_int(statement, index) != 0
     }
 
-    nonisolated func string(_ index: Int32) -> String? {
+    func string(_ index: Int32) -> String? {
         guard let pointer = sqlite3_column_text(statement, index) else { return nil }
         return String(cString: pointer)
     }
 
-    nonisolated func data(_ index: Int32) -> Data? {
+    func data(_ index: Int32) -> Data? {
         guard let bytes = sqlite3_column_blob(statement, index) else { return nil }
         let count = Int(sqlite3_column_bytes(statement, index))
         guard count > 0 else { return nil }
@@ -31,7 +31,7 @@ struct SQLiteRow {
     }
 }
 
-enum SQLiteDatabaseError: Error, LocalizedError {
+nonisolated enum SQLiteDatabaseError: Error, LocalizedError {
     case openFailed(path: String, code: Int32, message: String)
     case prepareFailed(sql: String, code: Int32, message: String)
     case bindFailed(index: Int32, code: Int32, message: String)
@@ -61,11 +61,11 @@ enum SQLiteDatabaseError: Error, LocalizedError {
     }
 }
 
-final class MessagesDatabase: @unchecked Sendable {
+nonisolated final class MessagesDatabase: @unchecked Sendable {
     private let path: String
     private let connection: OpaquePointer
 
-    nonisolated init(url: URL) throws {
+    init(url: URL) throws {
         self.path = url.path
         var rawConnection: OpaquePointer?
 
@@ -91,7 +91,7 @@ final class MessagesDatabase: @unchecked Sendable {
         sqlite3_close_v2(connection)
     }
 
-    nonisolated func readRows(
+    func readRows(
         sql: String,
         bind: ((OpaquePointer) throws -> Void)? = nil,
         handleRow: (SQLiteRow) throws -> Void
@@ -132,14 +132,14 @@ final class MessagesDatabase: @unchecked Sendable {
         }
     }
 
-    nonisolated func bind(int64: Int64, at index: Int32, in statement: OpaquePointer) throws {
+    func bind(int64: Int64, at index: Int32, in statement: OpaquePointer) throws {
         let code = sqlite3_bind_int64(statement, index, int64)
         guard code == SQLITE_OK else {
             throw SQLiteDatabaseError.bindFailed(index: index, code: code, message: String(cString: sqlite3_errmsg(connection)))
         }
     }
 
-    nonisolated func bind(string: String, at index: Int32, in statement: OpaquePointer) throws {
+    func bind(string: String, at index: Int32, in statement: OpaquePointer) throws {
         let transient = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
         let code = sqlite3_bind_text(statement, index, string, -1, transient)
         guard code == SQLITE_OK else {

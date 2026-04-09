@@ -248,7 +248,7 @@ public actor SQLiteMessagesSource: MessagesSource {
 
         let detail = ConversationDetail(
             conversation: enrichedConversation,
-            messageIndex: messageEntries.map { MessageIndexEntry(id: $0.id, sentAt: $0.sentAt) },
+            messageIndex: messageEntries.map { MessageIndexEntry(id: $0.id, guid: $0.guid, sentAt: $0.sentAt) },
             attachmentItems: attachmentItems
         )
 
@@ -283,6 +283,224 @@ public actor SQLiteMessagesSource: MessagesSource {
         )
 
         return TranscriptSlice(messages: messages, range: lower..<upper, totalCount: count)
+    }
+
+    public func searchLibrary(query: String, scope: SearchScope, limit: Int) async throws -> [ArchiveSearchResult] {
+        try verifyPaths()
+        try ensureBootstrapLoaded()
+
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return [] }
+
+        let database = try openDatabase()
+        let capabilities = try messageTableCapabilities(database: database)
+        let reverseConversationIDs = Dictionary(uniqueKeysWithValues: conversationLocators.map { ($1.chatRowID, $0) })
+        let likeQuery = "%\(trimmed)%"
+
+        var results: [ArchiveSearchResult] = []
+
+        let conversationMatches = conversationsByID.values
+            .filter { conversation in
+                conversation.title.localizedCaseInsensitiveContains(trimmed) ||
+                conversation.snippet.localizedCaseInsensitiveContains(trimmed) ||
+                conversation.participants.contains {
+                    $0.displayName.localizedCaseInsensitiveContains(trimmed) ||
+                    $0.handle.localizedCaseInsensitiveContains(trimmed)
+                }
+            }
+            .sorted { $0.lastActivityAt > $1.lastActivityAt }
+            .prefix(limit / 4)
+
+        results.append(contentsOf: conversationMatches.map { conversation in
+            ArchiveSearchResult(
+                id: "conversation:\(conversation.id.uuidString)",
+                kind: .conversation,
+                conversationID: conversation.id,
+                archiveTitle: conversation.title,
+                title: conversation.title,
+                subtitle: conversation.snippet,
+                sentAt: conversation.lastActivityAt
+            )
+        })
+
+        if scope == .all || scope == .messages || scope == .people {
+            let messageSQL = """
+            SELECT
+                cmj.chat_id,
+                m.ROWID,
+                m.guid,
+                m.text,
+                m.attributedBody,
+                COALESCE(m.cache_has_attachments, 0),
+                m.date,
+                COALESCE(m.is_from_me, 0),
+                h.id
+            FROM message AS m
+            JOIN chat_message_join AS cmj ON cmj.message_id = m.ROWID
+            LEFT JOIN handle AS h ON h.ROWID = m.handle_id
+            WHERE \(visibleMessagePredicate(alias: "m", capabilities: capabilities))
+              AND (
+                (m.text LIKE ? COLLATE NOCASE)
+                OR (h.id LIKE ? COLLATE NOCASE)
+              )
+            ORDER BY m.date DESC, m.ROWID DESC
+            LIMIT ?
+            """
+
+            try database.readRows(sql: messageSQL, bind: { statement in
+                try database.bind(string: likeQuery, at: 1, in: statement)
+                try database.bind(string: likeQuery, at: 2, in: statement)
+                try database.bind(int64: Int64(limit), at: 3, in: statement)
+            }) { row in
+                guard results.count < limit,
+                      let chatRowID = row.int64(0),
+                      let messageRowID = row.int64(1),
+                      let conversationID = reverseConversationIDs[chatRowID],
+                      let conversation = self.conversationsByID[conversationID] else {
+                    return
+                }
+
+                let messageID = self.stableUUID(for: "message:\(row.string(2) ?? String(messageRowID))")
+                let sentAt = Self.appleMessageDate(from: row.int64(6))
+                let subtitle = self.resolvedVisibleBody(
+                    text: row.string(3),
+                    attributedBody: row.data(4),
+                    hasAttachments: row.bool(5),
+                    context: .transcript
+                )
+                let sender = self.participant(handle: row.string(8), isFromMe: row.bool(7))
+
+                let include = switch scope {
+                case .all, .messages:
+                    subtitle.localizedCaseInsensitiveContains(trimmed)
+                case .people:
+                    sender?.displayName.localizedCaseInsensitiveContains(trimmed) == true ||
+                    sender?.handle.localizedCaseInsensitiveContains(trimmed) == true
+                case .media, .links, .attachments:
+                    false
+                }
+
+                guard include else { return }
+
+                results.append(
+                    ArchiveSearchResult(
+                        id: "message:\(messageID.uuidString)",
+                        kind: .message,
+                        conversationID: conversationID,
+                        messageID: messageID,
+                        archiveTitle: conversation.title,
+                        title: sender?.displayName ?? conversation.title,
+                        subtitle: subtitle,
+                        sentAt: sentAt
+                    )
+                )
+            }
+        }
+
+        if results.count < limit, scope == .all || scope == .media || scope == .links || scope == .attachments {
+            let attachmentSQL = """
+            SELECT
+                cmj.chat_id,
+                m.ROWID,
+                m.guid,
+                m.text,
+                m.attributedBody,
+                COALESCE(m.cache_has_attachments, 0),
+                m.date,
+                COALESCE(m.is_from_me, 0),
+                h.id,
+                a.ROWID,
+                a.guid,
+                a.filename,
+                a.transfer_name,
+                a.mime_type,
+                a.uti,
+                a.total_bytes
+            FROM message AS m
+            JOIN chat_message_join AS cmj ON cmj.message_id = m.ROWID
+            JOIN message_attachment_join AS maj ON maj.message_id = m.ROWID
+            JOIN attachment AS a ON a.ROWID = maj.attachment_id
+            LEFT JOIN handle AS h ON h.ROWID = m.handle_id
+            WHERE \(visibleMessagePredicate(alias: "m", capabilities: capabilities))
+              AND (
+                (a.filename LIKE ? COLLATE NOCASE)
+                OR (a.transfer_name LIKE ? COLLATE NOCASE)
+              )
+            ORDER BY m.date DESC, m.ROWID DESC, a.ROWID DESC
+            LIMIT ?
+            """
+
+            try database.readRows(sql: attachmentSQL, bind: { statement in
+                try database.bind(string: likeQuery, at: 1, in: statement)
+                try database.bind(string: likeQuery, at: 2, in: statement)
+                try database.bind(int64: Int64(limit), at: 3, in: statement)
+            }) { row in
+                guard results.count < limit,
+                      let chatRowID = row.int64(0),
+                      let messageRowID = row.int64(1),
+                      let attachmentRowID = row.int64(9),
+                      let conversationID = reverseConversationIDs[chatRowID],
+                      let conversation = self.conversationsByID[conversationID] else {
+                    return
+                }
+
+                let messageID = self.stableUUID(for: "message:\(row.string(2) ?? String(messageRowID))")
+                let sentAt = Self.appleMessageDate(from: row.int64(6))
+                let attachment = self.buildAttachment(
+                    attachmentRowID: attachmentRowID,
+                    attachmentGUID: row.string(10),
+                    rawFilename: row.string(11),
+                    transferName: row.string(12),
+                    mimeType: row.string(13),
+                    utiString: row.string(14),
+                    byteSize: row.int64(15) ?? 0,
+                    sentAt: sentAt
+                )
+                let kind = switch attachment.kind {
+                case .image, .video: SearchResultKind.media
+                case .link: SearchResultKind.link
+                case .file: SearchResultKind.attachment
+                }
+
+                let include = switch scope {
+                case .all:
+                    true
+                case .media:
+                    kind == .media
+                case .links:
+                    kind == .link
+                case .attachments:
+                    kind == .attachment
+                case .messages, .people:
+                    false
+                }
+
+                guard include else { return }
+
+                let subtitle = self.resolvedVisibleBody(
+                    text: row.string(3),
+                    attributedBody: row.data(4),
+                    hasAttachments: row.bool(5),
+                    context: .attachmentContext
+                )
+
+                results.append(
+                    ArchiveSearchResult(
+                        id: "\(kind.rawValue):\(attachment.id.uuidString)",
+                        kind: kind,
+                        conversationID: conversationID,
+                        messageID: messageID,
+                        attachmentID: attachment.id,
+                        archiveTitle: conversation.title,
+                        title: attachment.filename,
+                        subtitle: subtitle,
+                        sentAt: sentAt
+                    )
+                )
+            }
+        }
+
+        return Array(results.prefix(limit))
     }
 
     private func ensureBootstrapLoaded() throws {
@@ -605,6 +823,7 @@ public actor SQLiteMessagesSource: MessagesSource {
             entries.append(
                 SourceMessageEntry(
                     id: stableUUID(for: "message:\(guid ?? String(rowID))"),
+                    guid: guid,
                     rowID: rowID,
                     sentAt: Self.appleMessageDate(from: row.int64(2))
                 )
@@ -918,7 +1137,7 @@ public actor SQLiteMessagesSource: MessagesSource {
     private func resolvedConversationParticipants(handles: [String]) -> [Participant] {
         let uniqueHandles = Array(NSOrderedSet(array: handles)) as? [String] ?? handles
         var participants = [selfParticipant]
-        participants.append(contentsOf: uniqueHandles.map { participant(handle: $0, isFromMe: false)! })
+        participants.append(contentsOf: uniqueHandles.compactMap { participant(handle: $0, isFromMe: false) })
         return participants
     }
 
@@ -1100,12 +1319,14 @@ public actor SQLiteMessagesSource: MessagesSource {
             return selfParticipant
         }
 
-        guard let handle, !handle.isEmpty else { return nil }
+        guard let handle else { return nil }
+        let trimmedHandle = handle.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedHandle.isEmpty else { return nil }
         return Participant(
-            id: stableUUID(for: "participant:\(handle)"),
-            displayName: displayName(for: handle),
-            handle: handle,
-            accentColorName: accentColorName(for: handle)
+            id: stableUUID(for: "participant:\(trimmedHandle)"),
+            displayName: displayName(for: trimmedHandle),
+            handle: trimmedHandle,
+            accentColorName: accentColorName(for: trimmedHandle)
         )
     }
 
@@ -1193,25 +1414,187 @@ public actor SQLiteMessagesSource: MessagesSource {
             }
         }
 
+        if let typedstream = decodedTypedstreamText(from: data), !typedstream.isEmpty {
+            return typedstream
+        }
+
         let extracted = scanReadableStrings(in: data)
         guard !extracted.isEmpty else { return nil }
         return extracted
     }
 
+    private func decodedTypedstreamText(from data: Data) -> String? {
+        let bytes = [UInt8](data)
+        guard let streamtypedRange = data.range(of: Data("streamtyped".utf8)),
+              let nsStringRange = data.range(of: Data("NSString".utf8)),
+              streamtypedRange.lowerBound < nsStringRange.lowerBound else {
+            return nil
+        }
+
+        var candidates: [String] = []
+        var searchIndex = nsStringRange.upperBound
+
+        while searchIndex < bytes.count {
+            if let payload = typedstreamNSStringPayload(in: bytes, searchIndex: searchIndex) {
+                if let decoded = decodeTypedstreamPayload(payload, in: bytes),
+                   let cleaned = cleanVisibleBody(decoded),
+                   isLikelyUserVisibleExtractedText(cleaned) {
+                    candidates.append(cleaned)
+                }
+                searchIndex = payload.endIndex
+                continue
+            }
+
+            let remainingData = Data(bytes[searchIndex...])
+            guard let nextNSString = remainingData.range(of: Data("NSString".utf8)) else {
+                break
+            }
+            searchIndex += nextNSString.upperBound
+        }
+
+        let unique = Array(NSOrderedSet(array: candidates)) as? [String] ?? candidates
+        let joined = unique.joined(separator: " ").trimmingCharacters(in: .whitespacesAndNewlines)
+        return joined.isEmpty ? nil : joined
+    }
+
+    private func typedstreamNSStringPayload(in bytes: [UInt8], searchIndex: Int) -> Range<Int>? {
+        let maxPrefixScan = min(searchIndex + 8, bytes.count - 2)
+        guard searchIndex < maxPrefixScan else { return nil }
+
+        for index in searchIndex..<maxPrefixScan where bytes[index] == 0x2B {
+            guard index + 1 < bytes.count else { continue }
+
+            let prefix = bytes[index + 1]
+            let payloadStart: Int
+            let byteCount: Int
+
+            if prefix & 0x80 == 0 {
+                byteCount = Int(prefix)
+                payloadStart = index + 2
+            } else {
+                let lengthByteCount = Int(prefix & 0x7F)
+                let lengthStart = index + 2
+                let lengthEnd = lengthStart + lengthByteCount
+
+                guard lengthByteCount > 0, lengthEnd <= bytes.count else {
+                    continue
+                }
+
+                byteCount = bytes[lengthStart..<lengthEnd]
+                    .enumerated()
+                    .reduce(0) { partial, entry in
+                        partial | (Int(entry.element) << (entry.offset * 8))
+                    }
+                payloadStart = lengthEnd
+            }
+
+            let payloadEnd = payloadStart + byteCount
+
+            guard byteCount > 0,
+                  payloadEnd <= bytes.count else {
+                continue
+            }
+
+            return payloadStart..<payloadEnd
+        }
+
+        return nil
+    }
+
+    private func decodeTypedstreamPayload(_ payload: Range<Int>, in bytes: [UInt8]) -> String? {
+        let payloadBytes = Data(bytes[payload])
+
+        if let utf8 = longestValidUTF8Prefix(in: payloadBytes), utf8.contains("\u{FFFD}") == false {
+            return utf8
+        }
+
+        if let macOSRoman = String(data: payloadBytes, encoding: .macOSRoman) {
+            return macOSRoman
+        }
+
+        if let windows1252 = String(data: payloadBytes, encoding: .windowsCP1252) {
+            return windows1252
+        }
+
+        return String(data: payloadBytes, encoding: .utf8)
+    }
+
+    private func longestValidUTF8Prefix(in data: Data) -> String? {
+        for end in stride(from: data.count, through: 1, by: -1) {
+            let candidate = data.prefix(end)
+            if let decoded = String(data: candidate, encoding: .utf8) {
+                return decoded
+            }
+        }
+
+        return nil
+    }
+
     private func cleanVisibleBody(_ body: String?) -> String? {
         guard let body else { return nil }
-        let cleaned = body
+        let cleaned = normalizedVisibleBody(body)
+            .replacingOccurrences(of: "\\p{C}+", with: " ", options: .regularExpression)
             .replacingOccurrences(of: "\u{FFFC}", with: " ")
-            .components(separatedBy: .controlCharacters)
-            .joined(separator: " ")
             .replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
+            .replacingOccurrences(of: "^\\+[0-9A-Za-z](?=\\p{L})", with: "", options: .regularExpression)
             .trimmingCharacters(in: .whitespacesAndNewlines)
 
-        guard !cleaned.isEmpty, !looksLikeArchivedMetadata(cleaned) else {
+        guard !cleaned.isEmpty,
+              !looksLikeArchivedMetadata(cleaned),
+              !looksLikeAttachmentTokenStream(cleaned) else {
             return nil
         }
 
         return cleaned
+    }
+
+    private func normalizedVisibleBody(_ body: String) -> String {
+        let repaired = repairMojibakeIfNeeded(in: body)
+        return repaired.replacingOccurrences(of: "\u{00AC}", with: " ")
+    }
+
+    private func repairMojibakeIfNeeded(in value: String) -> String {
+        guard containsMojibakeMarker(value) else { return value }
+
+        let pieces = value.components(separatedBy: .whitespacesAndNewlines)
+        guard !pieces.isEmpty else { return value }
+
+        return pieces
+            .map(repairMojibakeToken)
+            .joined(separator: " ")
+    }
+
+    private func repairMojibakeToken(_ token: String) -> String {
+        guard containsMojibakeMarker(token) else { return token }
+
+        let candidates = [token, repairedToken(token, sourceEncoding: .macOSRoman), repairedToken(token, sourceEncoding: .windowsCP1252)]
+            .compactMap { $0 }
+
+        return candidates.min { lhs, rhs in
+            mojibakeScore(lhs) < mojibakeScore(rhs)
+        } ?? token
+    }
+
+    private func repairedToken(_ token: String, sourceEncoding: String.Encoding) -> String? {
+        guard let data = token.data(using: sourceEncoding),
+              let repaired = String(data: data, encoding: .utf8) else {
+            return nil
+        }
+        return repaired
+    }
+
+    private func containsMojibakeMarker(_ value: String) -> Bool {
+        let markers = ["√", "Ôø", "", "â€", "Ã", "ðŸ", "Â", "\u{00AC}"]
+        return markers.contains { value.contains($0) }
+    }
+
+    private func mojibakeScore(_ value: String) -> Int {
+        let suspiciousCharacters = ["√", "Ô", "ø", "", "â", "Ã", "ð", "Â", "\u{FFFD}", "\u{00AC}"]
+        let suspiciousCount = suspiciousCharacters.reduce(0) { partial, marker in
+            partial + value.components(separatedBy: marker).count - 1
+        }
+        let replacementPenalty = value.contains("\u{FFFC}") ? 1 : 0
+        return suspiciousCount + replacementPenalty
     }
 
     private func scanReadableStrings(in data: Data) -> String {
@@ -1252,18 +1635,29 @@ public actor SQLiteMessagesSource: MessagesSource {
     private func looksLikeArchivedMetadata(_ value: String) -> Bool {
         let metadataMarkers = [
             "__kIM",
+            "NSAttributedString",
+            "NSMutableAttributedString",
+            "NSObject",
             "AttributeName",
             "GUIDAttributeName",
             "WritingDirection",
             "NSNumber",
             "NSDictionary",
             "NSMutable",
+            "NSMutableString",
             "NSFont",
             "NSColor",
             "IMFileTransfer",
             "NSString",
+            "NSKeyedArchiver",
             "typedstream",
             "streamtyped",
+            "bplist00",
+            "$version",
+            "$objects",
+            "DDScannerResult",
+            "RelativeDay",
+            "DayOfWeek",
             "at_0_"
         ]
 
@@ -1284,9 +1678,34 @@ public actor SQLiteMessagesSource: MessagesSource {
         return false
     }
 
+    private func looksLikeAttachmentTokenStream(_ value: String) -> Bool {
+        let pattern = #"\$?[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}"#
+        guard let regex = try? NSRegularExpression(pattern: pattern) else {
+            return false
+        }
+
+        let range = NSRange(value.startIndex..<value.endIndex, in: value)
+        let matches = regex.matches(in: value, range: range)
+        guard !matches.isEmpty else { return false }
+
+        if matches.count > 1 {
+            return true
+        }
+
+        let stripped = regex.stringByReplacingMatches(in: value, range: range, withTemplate: "")
+            .replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        return stripped.isEmpty
+    }
+
     private func isLikelyUserVisibleExtractedText(_ value: String) -> Bool {
         guard !looksLikeArchivedMetadata(value) else {
             return false
+        }
+
+        let letterCount = value.unicodeScalars.filter { CharacterSet.letters.contains($0) }.count
+        if letterCount >= 3 {
+            return true
         }
 
         let words = value.split(whereSeparator: \.isWhitespace)
@@ -1294,7 +1713,7 @@ public actor SQLiteMessagesSource: MessagesSource {
             return true
         }
 
-        return value.count >= 8 && !value.contains("=")
+        return value.count >= 3 && !value.contains("=")
     }
 
     nonisolated static func appleMessageDate(from rawValue: Int64?) -> Date {
@@ -1361,6 +1780,7 @@ private struct ConversationSummary {
 
 private struct SourceMessageEntry {
     let id: UUID
+    let guid: String?
     let rowID: Int64
     let sentAt: Date
 }

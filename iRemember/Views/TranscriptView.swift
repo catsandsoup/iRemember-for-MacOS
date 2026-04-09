@@ -1,17 +1,18 @@
+import AppKit
 import SwiftUI
 
 struct TranscriptView: View {
     @Bindable var appModel: AppModel
 
     private var showsParticipantNames: Bool {
-        (appModel.selectedConversation?.participants.count ?? 0) > 2
+        (appModel.selectedArchiveSummary?.participants.count ?? 0) > 2
     }
 
     var body: some View {
         ScrollViewReader { proxy in
             ScrollView {
                 VStack(spacing: AppChrome.spacing12) {
-                    if appModel.canLoadEarlierMessages && appModel.searchText.isEmpty {
+                    if appModel.canLoadEarlierMessages {
                         TranscriptEdgeButton(title: "Load Earlier Messages") {
                             Task { await appModel.loadEarlierMessages() }
                         }
@@ -28,10 +29,14 @@ struct TranscriptView: View {
                                             previousMessage: section.messages[safe: index - 1],
                                             nextMessage: section.messages[safe: index + 1],
                                             isSelected: appModel.selectedMessageID == message.id,
+                                            isHighlighted: appModel.highlightedMessageID == message.id,
                                             showsParticipantName: showsParticipantNames,
-                                            availableMediaAssets: appModel.selectedDetail?.mediaAssets ?? [],
+                                            availableMediaAssets: appModel.selectedArchiveDetail?.mediaAssets ?? [],
                                             onSelectMedia: { asset in
-                                                appModel.selectedMediaAssetID = asset.id
+                                                appModel.presentMediaViewer(for: asset)
+                                            },
+                                            onJumpToReply: {
+                                                Task { await appModel.jumpToReplyContext(from: message) }
                                             }
                                         )
                                         .id(message.id)
@@ -50,7 +55,7 @@ struct TranscriptView: View {
                     .padding(.horizontal, AppChrome.panePadding)
                     .padding(.bottom, AppChrome.panePadding)
 
-                    if appModel.canLoadLaterMessages && appModel.searchText.isEmpty {
+                    if appModel.canLoadLaterMessages {
                         TranscriptEdgeButton(title: "Load Later Messages") {
                             Task { await appModel.loadLaterMessages() }
                         }
@@ -59,13 +64,9 @@ struct TranscriptView: View {
                 }
             }
             .background(AppTheme.contentBackground)
-            .animation(.smooth(duration: 0.2), value: appModel.transcriptWindow)
-            .animation(.smooth(duration: 0.2), value: appModel.searchText)
             .onChange(of: appModel.scrollTargetMessageID) { _, newValue in
                 guard let newValue else { return }
-                withAnimation(.smooth(duration: 0.2)) {
-                    proxy.scrollTo(newValue, anchor: .center)
-                }
+                proxy.scrollTo(newValue, anchor: .center)
             }
         }
     }
@@ -103,9 +104,11 @@ private struct MessageRow: View {
     let previousMessage: Message?
     let nextMessage: Message?
     let isSelected: Bool
+    let isHighlighted: Bool
     let showsParticipantName: Bool
     let availableMediaAssets: [MediaAsset]
     let onSelectMedia: (MediaAsset) -> Void
+    let onJumpToReply: () -> Void
 
     private var isOutgoing: Bool {
         message.direction == .outgoing
@@ -133,6 +136,21 @@ private struct MessageRow: View {
         visibleBodyText.isEmpty && message.attachments.allSatisfy { $0.kind == .image || $0.kind == .video }
     }
 
+    private var stackedMediaAttachments: [MediaAttachmentGroupItem]? {
+        guard message.attachments.count > 1,
+              message.attachments.allSatisfy({ $0.kind == .image || $0.kind == .video }) else {
+            return nil
+        }
+
+        let items = message.attachments.compactMap { attachment in
+            matchingMediaAsset(for: attachment).map { asset in
+                MediaAttachmentGroupItem(attachment: attachment, asset: asset)
+            }
+        }
+
+        return items.count == message.attachments.count ? items : nil
+    }
+
     var body: some View {
         HStack(alignment: .bottom) {
             if isOutgoing {
@@ -146,7 +164,7 @@ private struct MessageRow: View {
 
                 VStack(alignment: alignment, spacing: 4) {
                     if let replyContext = message.replyContext {
-                        ReplyPreviewView(replyContext: replyContext, isOutgoing: isOutgoing)
+                        ReplyPreviewView(replyContext: replyContext, isOutgoing: isOutgoing, action: onJumpToReply)
                     }
 
                     bubble
@@ -169,6 +187,15 @@ private struct MessageRow: View {
             }
         }
         .padding(.vertical, verticalSpacing)
+        .contextMenu {
+            if message.replyContext != nil {
+                Button("Jump to Original", action: onJumpToReply)
+            }
+            Button("Copy Message") {
+                NSPasteboard.general.clearContents()
+                NSPasteboard.general.setString(message.body, forType: .string)
+            }
+        }
     }
 
     @ViewBuilder
@@ -193,26 +220,47 @@ private struct MessageRow: View {
             }
 
             if !message.attachments.isEmpty {
-                VStack(alignment: .leading, spacing: 8) {
-                    ForEach(message.attachments) { attachment in
-                        MessageAttachmentBlock(
-                            message: message,
-                            attachment: attachment,
-                            isOutgoing: isOutgoing,
-                            asset: matchingMediaAsset(for: attachment),
-                            onSelectMedia: onSelectMedia
-                        )
+                if let stackedMediaAttachments {
+                    MessageMediaAttachmentGroupView(
+                        items: stackedMediaAttachments,
+                        onSelectMedia: onSelectMedia
+                    )
+                } else {
+                    VStack(alignment: .leading, spacing: 8) {
+                        ForEach(message.attachments) { attachment in
+                            MessageAttachmentBlock(
+                                message: message,
+                                attachment: attachment,
+                                isOutgoing: isOutgoing,
+                                asset: matchingMediaAsset(for: attachment),
+                                onSelectMedia: onSelectMedia
+                            )
+                        }
                     }
                 }
             }
         }
-        .padding(.horizontal, showsOnlyMedia ? 8 : 14)
-        .padding(.vertical, showsOnlyMedia ? 8 : 10)
+        .padding(.horizontal, showsOnlyMedia ? 0 : 14)
+        .padding(.vertical, showsOnlyMedia ? 2 : 10)
         .frame(maxWidth: bubbleMaxWidth, alignment: .leading)
-        .background(bubbleBackground)
+        .background {
+            if showsOnlyMedia {
+                Color.clear
+            } else {
+                bubbleBackground
+            }
+        }
         .overlay {
-            BubbleShape(direction: message.direction, showsTail: endsCluster)
-                .stroke(isSelected ? AppTheme.activeSelectionStroke : AppTheme.bubbleStroke, lineWidth: isSelected ? 1.25 : 1)
+            if !showsOnlyMedia {
+                BubbleShape(direction: message.direction, showsTail: endsCluster)
+                    .stroke(isSelected ? AppTheme.activeSelectionStroke : AppTheme.bubbleStroke, lineWidth: isSelected ? 1.25 : 1)
+            }
+        }
+        .overlay {
+            if isHighlighted && !isSelected && !showsOnlyMedia {
+                BubbleShape(direction: message.direction, showsTail: endsCluster)
+                    .fill(AppTheme.activeTint.opacity(0.12))
+            }
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel(accessibilityLabel)
@@ -244,8 +292,8 @@ private struct MessageRow: View {
     }
 
     private var bubbleMaxWidth: CGFloat {
-        if showsOnlyMedia {
-            return 320
+        if showsOnlyMedia || stackedMediaAttachments != nil {
+            return 300
         }
 
         return message.attachments.isEmpty ? 520 : 420
@@ -273,35 +321,96 @@ private struct MessageRow: View {
     }
 }
 
+private struct MediaAttachmentGroupItem: Identifiable {
+    let attachment: Attachment
+    let asset: MediaAsset
+
+    var id: UUID { attachment.id }
+}
+
 private struct ReplyPreviewView: View {
     let replyContext: MessageReplyContext
     let isOutgoing: Bool
+    let action: () -> Void
 
     var body: some View {
-        HStack(spacing: 10) {
-            Rectangle()
-                .fill(isOutgoing ? AppTheme.replyOutgoingBar : AppTheme.replyIncomingBar)
-                .frame(width: 3)
+        Button(action: action) {
+            HStack(spacing: 10) {
+                Rectangle()
+                    .fill(isOutgoing ? AppTheme.replyOutgoingBar : AppTheme.replyIncomingBar)
+                    .frame(width: 3)
 
-            VStack(alignment: .leading, spacing: 2) {
-                if let quotedSender = replyContext.quotedSender {
-                    Text(quotedSender)
-                        .font(.caption.weight(.semibold))
+                VStack(alignment: .leading, spacing: 2) {
+                    if let quotedSender = replyContext.quotedSender {
+                        Text(quotedSender)
+                            .font(.caption.weight(.semibold))
+                    }
+
+                    Text(replyContext.quotedText)
+                        .font(.caption)
+                        .lineLimit(2)
                 }
-
-                Text(replyContext.quotedText)
-                    .font(.caption)
-                    .lineLimit(2)
+                .foregroundStyle(isOutgoing ? AppTheme.replyOutgoingText : .secondary)
             }
-            .foregroundStyle(isOutgoing ? AppTheme.replyOutgoingText : .secondary)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .frame(maxWidth: 280, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(isOutgoing ? AppTheme.replyOutgoingSurface : AppTheme.secondarySurface)
+            )
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
-        .frame(maxWidth: 280, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(isOutgoing ? AppTheme.replyOutgoingSurface : AppTheme.secondarySurface)
-        )
+        .buttonStyle(.plain)
+        .help("Jump to original message")
+        .contextMenu {
+            Button("Jump to Original", action: action)
+        }
+    }
+}
+
+private struct MessageMediaAttachmentGroupView: View {
+    let items: [MediaAttachmentGroupItem]
+    let onSelectMedia: (MediaAsset) -> Void
+
+    private var visibleItems: [MediaAttachmentGroupItem] {
+        Array(items.prefix(3))
+    }
+
+    var body: some View {
+        VStack(alignment: .trailing, spacing: 6) {
+            Text(groupLabel)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(AppTheme.activeTint)
+
+            Button {
+                if let leadAsset = items.first?.asset {
+                    onSelectMedia(leadAsset)
+                }
+            } label: {
+                ZStack(alignment: .topTrailing) {
+                    ForEach(Array(visibleItems.indices.reversed()), id: \.self) { index in
+                        let item = visibleItems[index]
+                        AttachmentThumbnailView(asset: item.asset)
+                            .frame(width: 282, height: 212)
+                            .rotationEffect(.degrees(Double(index) * 2.2))
+                            .offset(x: CGFloat(index) * 10, y: CGFloat(index) * 8)
+                            .shadow(color: Color.black.opacity(index == 0 ? 0.18 : 0.1), radius: 14, y: 5)
+                    }
+                }
+                .frame(width: 304, height: 228, alignment: .topTrailing)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(groupLabel)
+        }
+        .frame(maxWidth: .infinity, alignment: .trailing)
+    }
+
+    private var groupLabel: String {
+        let hasVideo = items.contains { $0.attachment.kind == .video }
+        if hasVideo {
+            return items.count == 1 ? "1 Media Item" : "\(items.count) Media Items"
+        }
+        return items.count == 1 ? "1 Photo" : "\(items.count) Photos"
     }
 }
 
@@ -327,27 +436,16 @@ private struct MessageAttachmentBlock: View {
             Button {
                 onSelectMedia(asset)
             } label: {
-                VStack(alignment: .leading, spacing: AppChrome.spacing8) {
-                    AttachmentThumbnailView(asset: asset)
-                        .frame(width: 248, height: 168)
-
-                    HStack(alignment: .firstTextBaseline, spacing: 8) {
-                        Text(attachment.filename)
-                            .font(.subheadline.weight(.medium))
-                            .foregroundStyle(textForeground)
-                            .lineLimit(1)
-
-                        Spacer(minLength: 8)
-
-                        Text(attachment.kind.label)
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(subtleForeground)
-                    }
-                }
-                .padding(6)
-                .background(fileBackground)
+                AttachmentThumbnailView(asset: asset)
+                    .frame(width: 282, height: 212)
+                    .accessibilityLabel("\(attachment.kind.label): \(attachment.filename)")
             }
             .buttonStyle(.plain)
+            .contextMenu {
+                Button("Inspect Media") {
+                    onSelectMedia(asset)
+                }
+            }
         } else {
             fileBlock
         }
@@ -375,6 +473,22 @@ private struct MessageAttachmentBlock: View {
         }
         .padding(10)
         .background(fileBackground)
+        .overlay(alignment: .bottomLeading) {
+            if !attachment.isAvailableLocally {
+                Text("Original unavailable on this Mac")
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(subtleForeground)
+                    .padding(.horizontal, 10)
+                    .padding(.bottom, 6)
+            }
+        }
+        .contextMenu {
+            if attachment.isAvailableLocally, let fileURL = attachment.fileURL {
+                Button("Reveal in Finder") {
+                    NSWorkspace.shared.activateFileViewerSelecting([fileURL])
+                }
+            }
+        }
     }
 
     private var attachmentDetailText: String {

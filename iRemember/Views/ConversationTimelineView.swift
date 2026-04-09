@@ -1,286 +1,215 @@
-import Charts
 import SwiftUI
 
 struct ConversationTimelineView: View {
     @Bindable var appModel: AppModel
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            VStack(alignment: .leading, spacing: AppChrome.spacing12) {
-                header
+        let timelineYears = appModel.timelineYears
+        let displayedDate = appModel.pendingTimelineDate ?? appModel.timelineAnchorDate
+        let focusedYear = Calendar.autoupdatingCurrent.component(.year, from: displayedDate)
 
-                if appModel.isTimelineCollapsed {
-                    collapsedState
+        VStack(spacing: 0) {
+            VStack(alignment: .trailing, spacing: AppChrome.spacing12) {
+                timelineToolbar
+
+                Divider()
+
+                if timelineYears.isEmpty {
+                    TimelineEmptyStateView()
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
                 } else {
-                    VStack(alignment: .leading, spacing: AppChrome.spacing12) {
-                        timelineChart
-                        scrubber
-                    }
-                    .padding(AppChrome.spacing12)
-                    .background(
-                        RoundedRectangle(cornerRadius: AppChrome.cardRadius, style: .continuous)
-                            .fill(AppTheme.secondarySurface)
-                    )
-                }
-            }
-            .padding(.horizontal, AppChrome.panePadding)
-            .padding(.top, AppChrome.spacing12)
-            .padding(.bottom, AppChrome.spacing12)
-        }
-        .background(AppTheme.chromeBackground)
-        .accessibilityIdentifier("timeline-panel")
-    }
-
-    private var header: some View {
-        HStack(alignment: .center, spacing: AppChrome.spacing16) {
-            VStack(alignment: .leading, spacing: AppChrome.spacing4) {
-                Text("Timeline")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(AppTheme.metadataText)
-
-                HStack(alignment: .firstTextBaseline, spacing: 10) {
-                    Text(appModel.timelineSummaryTitle)
-                        .font(.title3.weight(.semibold))
-
-                    Text(appModel.timelineAnchorDate.compactDateLabel)
-                        .font(.subheadline)
-                        .foregroundStyle(AppTheme.metadataText)
-                }
-            }
-
-            Spacer()
-
-            HStack(spacing: AppChrome.spacing8) {
-                Picker("Range", selection: $appModel.timelineRange) {
-                    ForEach(TimelineRange.allCases) { range in
-                        Text(range.label).tag(range)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .frame(width: 204)
-                .accessibilityIdentifier("timeline-range-picker")
-
-                Button {
-                    withAnimation(.smooth(duration: 0.18)) {
-                        appModel.toggleTimelineVisibility()
-                    }
-                } label: {
-                    Image(systemName: appModel.isTimelineCollapsed ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right")
-                }
-                .buttonStyle(.bordered)
-                .help(appModel.isTimelineCollapsed ? "Expand timeline" : "Collapse timeline")
-                .accessibilityIdentifier("timeline-toggle")
-            }
-        }
-    }
-
-    private var collapsedState: some View {
-        HStack(spacing: 10) {
-            Image(systemName: "timeline.selection")
-                .foregroundStyle(.secondary)
-
-            Text("Timeline hidden. Expand to jump across weeks, months, and years.")
-                .font(.callout)
-                .foregroundStyle(AppTheme.metadataText)
-
-            Spacer()
-        }
-        .padding(AppChrome.spacing16)
-        .background(
-            RoundedRectangle(cornerRadius: AppChrome.cardRadius, style: .continuous)
-                .fill(AppTheme.secondarySurface)
-        )
-    }
-
-    private var timelineChart: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            ScrollView(.horizontal) {
-                Chart(appModel.timelineBuckets) { bucket in
-                    BarMark(
-                        xStart: .value("Start", bucket.startDate),
-                        xEnd: .value("End", bucket.endDate),
-                        y: .value("Messages", bucket.messageCount)
-                    )
-                    .foregroundStyle(isActive(bucket) ? AppTheme.activeFill : AppTheme.timelineInactiveFill)
-                    .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
-                }
-                .chartYAxis(.hidden)
-                .chartXAxis {
-                    AxisMarks(values: .automatic(desiredCount: appModel.timelineRange == .year ? 6 : 5)) {
-                        AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
-                            .foregroundStyle(.quaternary)
-                        AxisValueLabel()
-                            .font(.caption2)
-                            .foregroundStyle(AppTheme.metadataText)
-                    }
-                }
-                .frame(width: timelineContentWidth, height: max(appModel.timelineHeight, 88))
-                .overlay {
-                    bucketHitTargetOverlay
-                }
-                .padding(.horizontal, 2)
-                .padding(.vertical, AppChrome.spacing8)
-                .accessibilityLabel("Conversation activity timeline")
-            }
-            .scrollIndicators(.hidden)
-            .accessibilityIdentifier("timeline-scroll-surface")
-        }
-    }
-
-    private var scrubber: some View {
-        HStack(spacing: AppChrome.spacing12) {
-            Button {
-                appModel.moveTimelineRange(by: -1)
-            } label: {
-                Image(systemName: "chevron.left")
-            }
-            .buttonStyle(.bordered)
-
-            TimelineAnchorBadge(date: appModel.timelineAnchorDate)
-
-            DayScrubberView(appModel: appModel)
-
-            Button {
-                appModel.moveTimelineRange(by: 1)
-            } label: {
-                Image(systemName: "chevron.right")
-            }
-            .buttonStyle(.bordered)
-        }
-    }
-
-    private var bucketHitTargetOverlay: some View {
-        GeometryReader { geometry in
-            let buckets = appModel.timelineBuckets
-            let width = geometry.size.width / CGFloat(max(buckets.count, 1))
-
-            HStack(spacing: 0) {
-                ForEach(buckets) { bucket in
-                    Button {
-                        Task { await appModel.jumpToTimelineBucket(bucket) }
-                    } label: {
-                        Color.clear
-                            .frame(width: width)
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(bucketAccessibilityLabel(bucket))
-                    .help("Jump to \(bucket.startDate.formatted(date: .abbreviated, time: .omitted))")
-                }
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-        }
-    }
-
-    private var timelineContentWidth: CGFloat {
-        let bucketWidth: CGFloat
-
-        switch appModel.timelineRange {
-        case .week:
-            bucketWidth = 104
-        case .month:
-            bucketWidth = 148
-        case .year:
-            bucketWidth = 136
-        }
-
-        let minimumWidth: CGFloat = 760
-        return max(CGFloat(max(appModel.timelineBuckets.count, 1)) * bucketWidth, minimumWidth)
-    }
-
-    private func isActive(_ bucket: TimelineBucket) -> Bool {
-        bucket.startDate <= appModel.timelineAnchorDate && appModel.timelineAnchorDate < bucket.endDate
-    }
-
-    private func bucketAccessibilityLabel(_ bucket: TimelineBucket) -> String {
-        "\(bucket.startDate.formatted(date: .abbreviated, time: .omitted)), \(bucket.messageCount) messages"
-    }
-}
-
-private struct TimelineAnchorBadge: View {
-    let date: Date
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text("Focused")
-                .font(.caption2.weight(.semibold))
-                .foregroundStyle(.secondary)
-
-            Text(date.compactDateLabel)
-                .font(.subheadline.weight(.semibold))
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
-        .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(AppTheme.activeTint)
-        )
-    }
-}
-
-private struct DayScrubberView: View {
-    @Bindable var appModel: AppModel
-
-    var body: some View {
-        ScrollViewReader { proxy in
-            ScrollView(.horizontal) {
-                HStack(spacing: 8) {
-                    ForEach(appModel.dateScrubberDays, id: \.self) { day in
-                        Button {
-                            Task { await appModel.jumpToDay(day) }
-                        } label: {
-                            VStack(spacing: 4) {
-                                Text(day, format: .dateTime.weekday(.abbreviated))
-                                    .font(.caption2.weight(.semibold))
-                                    .foregroundStyle(.secondary)
-
-                                Text(day, format: .dateTime.day())
-                                    .font(.headline.weight(.medium))
-                                    .foregroundStyle(.primary)
-                            }
-                            .frame(width: 68)
-                            .padding(.vertical, 10)
-                            .background(
-                                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                    .fill(isSelected(day) ? AppTheme.activeTint : Color.clear)
-                            )
-                            .overlay {
-                                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                    .stroke(isSelected(day) ? AppTheme.sidebarSelectionStroke : Color.clear, lineWidth: 1)
+                    ScrollView {
+                        LazyVStack(alignment: .trailing, spacing: 10) {
+                            ForEach(timelineYears, id: \.self) { year in
+                                TimelineYearGroup(
+                                    year: year,
+                                    months: appModel.timelineMonths(for: year),
+                                    focusedDate: displayedDate,
+                                    isFocused: year == focusedYear,
+                                    onSelectYear: {
+                                        Task { await appModel.jumpToTimelineYear(year) }
+                                    },
+                                    onPreviewYear: { previewDate in
+                                        appModel.previewTimelineJump(to: previewDate)
+                                    },
+                                    onCommitPreview: {
+                                        Task { await appModel.commitTimelineJump() }
+                                    },
+                                    onSelectMonth: { marker in
+                                        Task { await appModel.jumpToTimelineMonth(marker) }
+                                    },
+                                    onPreviewMonth: { marker in
+                                        appModel.previewTimelineJump(to: marker.startDate)
+                                    },
+                                    onCommitMonthPreview: {
+                                        Task { await appModel.commitTimelineJump() }
+                                    }
+                                )
                             }
                         }
-                        .id(day)
-                        .buttonStyle(.plain)
-                        .accessibilityLabel(day.formatted(date: .complete, time: .omitted))
-                        .accessibilityValue(isSelected(day) ? "Selected timeline day" : "")
+                        .frame(maxWidth: .infinity, alignment: .trailing)
+                        .padding(.vertical, 6)
                     }
+                    .scrollIndicators(.hidden)
                 }
-                .padding(.horizontal, 2)
+
+                TimelineFocusBadge(date: displayedDate, isPending: appModel.pendingTimelineDate != nil)
             }
-            .scrollIndicators(.hidden)
-            .accessibilityIdentifier("timeline-day-scrubber")
-            .onAppear {
-                scrollToSelection(with: proxy, animated: false)
-            }
-            .onChange(of: appModel.timelineAnchorDate) { _, _ in
-                scrollToSelection(with: proxy, animated: true)
-            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, AppChrome.spacing16)
+            .frame(width: 96)
+            .frame(maxHeight: .infinity, alignment: .topTrailing)
         }
+        .background(AppTheme.chromeBackground)
+        .overlay(alignment: .leading) {
+            Divider()
+        }
+        .accessibilityIdentifier("timeline-rail")
     }
 
-    private func scrollToSelection(with proxy: ScrollViewProxy, animated: Bool) {
-        guard let selectedDay = appModel.dateScrubberDays.first(where: isSelected(_:)) else { return }
-
-        if animated {
-            withAnimation(.smooth(duration: 0.18)) {
-                proxy.scrollTo(selectedDay, anchor: .center)
+    private var timelineToolbar: some View {
+        VStack(alignment: .trailing, spacing: AppChrome.spacing12) {
+            Button {
+                appModel.isDateJumpPresented = true
+            } label: {
+                Image(systemName: "calendar")
+                    .frame(width: 30, height: 30)
             }
-        } else {
-            proxy.scrollTo(selectedDay, anchor: .center)
+            .buttonStyle(.bordered)
+            .help("Jump to date")
+            .accessibilityLabel("Jump to date")
+
+            if appModel.canReturnToPreviousPosition {
+                Button {
+                    Task { await appModel.returnToPreviousPosition() }
+                } label: {
+                    Image(systemName: "arrow.uturn.backward")
+                        .frame(width: 30, height: 30)
+                }
+                .buttonStyle(.bordered)
+                .help(appModel.jumpOriginDescription ?? "Back to previous position")
+                .accessibilityLabel(appModel.jumpOriginDescription ?? "Back to previous position")
+            }
         }
+        .controlSize(.small)
+    }
+}
+
+private struct TimelineYearGroup: View {
+    let year: Int
+    let months: [TimelineMonthMarker]
+    let focusedDate: Date
+    let isFocused: Bool
+    let onSelectYear: () -> Void
+    let onPreviewYear: (Date) -> Void
+    let onCommitPreview: () -> Void
+    let onSelectMonth: (TimelineMonthMarker) -> Void
+    let onPreviewMonth: (TimelineMonthMarker) -> Void
+    let onCommitMonthPreview: () -> Void
+
+    var body: some View {
+        VStack(alignment: .trailing, spacing: 6) {
+            Button(action: onSelectYear) {
+                Text(String(year))
+                    .font(.system(size: isFocused ? 14 : 13, weight: isFocused ? .semibold : .medium))
+                    .foregroundStyle(isFocused ? Color.primary : AppTheme.metadataText)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 5)
+                    .background(
+                        Capsule(style: .continuous)
+                            .fill(isFocused ? AppTheme.sidebarSelectionFill : Color.clear)
+                    )
+            }
+            .buttonStyle(.plain)
+            .contentShape(Rectangle())
+            .highPriorityGesture(
+                DragGesture(minimumDistance: 6)
+                    .onChanged { _ in
+                        if let previewDate = months.first?.startDate {
+                            onPreviewYear(previewDate)
+                        }
+                    }
+                    .onEnded { _ in
+                        onCommitPreview()
+                    }
+            )
+            .accessibilityLabel("Jump to \(year)")
+
+            VStack(alignment: .trailing, spacing: 4) {
+                ForEach(months) { marker in
+                    Button {
+                        onSelectMonth(marker)
+                    } label: {
+                        Text(marker.shortLabel)
+                            .font(.caption.weight(isFocusedMonth(marker) ? .semibold : .medium))
+                            .foregroundStyle(isFocusedMonth(marker) ? Color.primary : AppTheme.tertiaryText)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 3)
+                            .background(
+                                Capsule(style: .continuous)
+                                    .fill(isFocusedMonth(marker) ? AppTheme.sidebarSelectionFill : Color.clear)
+                            )
+                    }
+                    .buttonStyle(.plain)
+                    .highPriorityGesture(
+                        DragGesture(minimumDistance: 6)
+                            .onChanged { _ in
+                                onPreviewMonth(marker)
+                            }
+                            .onEnded { _ in
+                                onCommitMonthPreview()
+                            }
+                    )
+                    .accessibilityLabel("Jump to \(marker.startDate.formatted(date: .abbreviated, time: .omitted))")
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .trailing)
     }
 
-    private func isSelected(_ day: Date) -> Bool {
-        Calendar.autoupdatingCurrent.isDate(day, inSameDayAs: appModel.timelineAnchorDate)
+    private func isFocusedMonth(_ marker: TimelineMonthMarker) -> Bool {
+        let calendar = Calendar.autoupdatingCurrent
+        return calendar.component(.year, from: focusedDate) == marker.year &&
+            calendar.component(.month, from: focusedDate) == marker.month
+    }
+}
+
+private struct TimelineEmptyStateView: View {
+    var body: some View {
+        VStack(alignment: .trailing, spacing: 6) {
+            Text("No timeline")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(AppTheme.metadataText)
+
+            Text("The archive index has not loaded enough history to show year and month anchors yet.")
+                .font(.caption2)
+                .foregroundStyle(AppTheme.tertiaryText)
+                .multilineTextAlignment(.trailing)
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("No timeline anchors available yet")
+    }
+}
+
+private struct TimelineFocusBadge: View {
+    let date: Date
+    let isPending: Bool
+
+    var body: some View {
+        VStack(alignment: .trailing, spacing: 2) {
+            Text(date, format: .dateTime.month(.abbreviated))
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(AppTheme.metadataText)
+
+            Text(date, format: .dateTime.year())
+                .font(.caption.weight(.semibold))
+
+            if isPending {
+                Text("Release to jump")
+                    .font(.caption2)
+                    .foregroundStyle(AppTheme.tertiaryText)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .trailing)
     }
 }

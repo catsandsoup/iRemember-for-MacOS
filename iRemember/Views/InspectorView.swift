@@ -6,186 +6,81 @@ struct InspectorView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: AppChrome.sectionSpacing) {
-                if let conversation = appModel.selectedConversation {
-                    inspectorHeader(conversation: conversation)
-                    overviewSection(conversation: conversation)
+                if let archive = appModel.selectedArchiveSummary {
+                    PersonCard(archive: archive, linkedHandleSummary: appModel.linkedHandleSummary)
+
+                    SharedCard(appModel: appModel)
+
+                    ExportCard(appModel: appModel)
+
+                    ArchiveCard(
+                        archiveRangeSummary: appModel.archiveRangeSummary,
+                        messageCount: archive.messageCount.groupedCount,
+                        mediaCount: archive.mediaCount.groupedCount,
+                        participantCount: archive.participants.count.groupedCount,
+                        mergeStateLabel: appModel.mergeStateLabel
+                    )
+
+                    if appModel.showsMergeSuggestion {
+                        MergeCard(appModel: appModel)
+                    }
 
                     if let message = appModel.selectedMessage {
-                        messageSection(message)
+                        MessageCard(message: message)
                     }
 
                     if let asset = appModel.selectedMediaAsset {
-                        selectedMediaSection(asset)
+                        SelectedMediaCard(appModel: appModel, asset: asset)
                     }
 
-                    if !(appModel.selectedDetail?.mediaAssets.isEmpty ?? true) {
-                        sharedMediaSection
-                    }
-
-                    if !appModel.linkAttachmentItems.isEmpty {
-                        sharedLinksSection
-                    }
-
-                    sourceSection
+                    SourceCard(appModel: appModel)
                 } else {
                     ContentUnavailableView(
                         "No Selection",
                         systemImage: "sidebar.right",
-                        description: Text("Inspector details appear when a conversation, message, or media asset is selected.")
+                        description: Text("Inspector details appear when a conversation, person archive, or media item is selected.")
                     )
                 }
             }
             .padding(AppChrome.spacing16)
         }
-        .background(AppTheme.inspectorBackground)
+        .frame(minWidth: 300, idealWidth: 320, maxWidth: 360, maxHeight: .infinity, alignment: .topLeading)
+        .controlSize(.small)
     }
+}
 
-    private func inspectorHeader(conversation: Conversation) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
+private struct PersonCard: View {
+    let archive: ArchiveSummary
+    let linkedHandleSummary: String
+
+    var body: some View {
+        InspectorSectionCard(title: "Person") {
             HStack(spacing: 12) {
                 Circle()
                     .fill(AppTheme.activeTint)
-                    .frame(width: 48, height: 48)
+                    .frame(width: 46, height: 46)
                     .overlay {
-                        Text(initials(for: conversation.title))
+                        Text(initials(for: archive.title))
                             .font(.headline.weight(.semibold))
                     }
 
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(conversation.title)
+                    Text(archive.title)
                         .font(.title3.weight(.semibold))
                         .lineLimit(2)
-                    Text(conversation.participantSummary)
+                    Text(linkedHandleSummary)
                         .font(.subheadline)
                         .foregroundStyle(AppTheme.metadataText)
-                        .lineLimit(2)
                 }
             }
-        }
-        .padding(AppChrome.spacing12)
-        .background(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(AppTheme.chromeBackground)
-        )
-    }
 
-    private func overviewSection(conversation: Conversation) -> some View {
-        inspectorSection(title: "Overview") {
-            HStack(spacing: AppChrome.spacing8) {
-                InspectorStatPill(label: "Messages", value: conversation.messageCount.groupedCount)
-                InspectorStatPill(label: "Media", value: conversation.mediaCount.groupedCount)
-                InspectorStatPill(label: "Active", value: conversation.lastActivityAt.sidebarLabel)
-            }
-        }
-    }
-
-    private func messageSection(_ message: Message) -> some View {
-        inspectorSection(title: "Selected Message") {
-            InspectorMetricRow(label: "Sender", value: message.sender?.displayName ?? "System")
-            InspectorMetricRow(label: "Sent", value: message.sentAt.compactDateTimeLabel)
-            InspectorMetricRow(label: "Attachments", value: "\(message.attachments.count.groupedCount)")
-
-            if !message.body.isEmpty {
-                Text(message.body)
-                    .font(.callout)
-                    .foregroundStyle(AppTheme.metadataText)
+            if !archive.linkedHandles.isEmpty {
+                Text(archive.linkedHandles.joined(separator: " · "))
+                    .font(.caption)
+                    .foregroundStyle(AppTheme.tertiaryText)
                     .fixedSize(horizontal: false, vertical: true)
-                    .padding(.top, 4)
             }
         }
-    }
-
-    private func selectedMediaSection(_ asset: MediaAsset) -> some View {
-        inspectorSection(title: "Selected Media") {
-            AttachmentThumbnailView(asset: asset)
-                .frame(height: 156)
-
-            InspectorMetricRow(label: "Filename", value: asset.attachment.filename)
-            InspectorMetricRow(label: "Type", value: asset.attachment.kind.label)
-            InspectorMetricRow(label: "Sender", value: asset.sender?.displayName ?? "Unknown sender")
-            InspectorMetricRow(label: "Sent", value: asset.sentAt.compactDateTimeLabel)
-            InspectorMetricRow(label: "Availability", value: asset.attachment.isAvailableLocally ? "Available locally" : "Original unavailable")
-
-            Button("Reveal in Transcript") {
-                Task { await appModel.revealMediaInTranscript(asset) }
-            }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.regular)
-        }
-        .padding(AppChrome.spacing12)
-        .background(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(AppTheme.chromeBackground)
-        )
-    }
-
-    private var sharedMediaSection: some View {
-        inspectorSection(title: "Shared Media") {
-            ScrollView(.horizontal) {
-                HStack(spacing: 10) {
-                    ForEach(appModel.selectedDetail?.mediaAssets.prefix(8) ?? []) { asset in
-                        Button {
-                            appModel.selectedMediaAssetID = asset.id
-                            appModel.contentMode = .media
-                        } label: {
-                            AttachmentThumbnailView(asset: asset)
-                                .frame(width: 82, height: 82)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-            }
-            .scrollIndicators(.hidden)
-        }
-    }
-
-    private var sharedLinksSection: some View {
-        inspectorSection(title: "Shared Links") {
-            VStack(alignment: .leading, spacing: 12) {
-                ForEach(appModel.linkAttachmentItems.prefix(4), id: \.attachment.id) { item in
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(item.attachment.filename)
-                            .font(.subheadline.weight(.semibold))
-                        Text(item.contextSnippet)
-                            .font(.caption)
-                            .foregroundStyle(AppTheme.metadataText)
-                            .lineLimit(2)
-                        Text(item.sentAt.compactDateLabel)
-                            .font(.caption2)
-                            .foregroundStyle(AppTheme.tertiaryText)
-                    }
-
-                    if item.attachment.id != appModel.linkAttachmentItems.prefix(4).last?.attachment.id {
-                        Divider()
-                    }
-                }
-            }
-        }
-    }
-
-    private var sourceSection: some View {
-        inspectorSection(title: "Source") {
-            InspectorMetricRow(label: "Mode", value: "Read-only")
-            InspectorMetricRow(label: "Strategy", value: appModel.sourceStrategy.label)
-            InspectorMetricRow(label: "Library", value: appModel.sourceModeName)
-        }
-    }
-
-    private func inspectorSection<Content: View>(title: String, @ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(title)
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(AppTheme.metadataText)
-                .textCase(.uppercase)
-
-            content()
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .overlay(alignment: .bottom) {
-            Divider()
-                .padding(.top, AppChrome.spacing12)
-        }
-        .padding(.bottom, AppChrome.spacing12)
     }
 
     private func initials(for title: String) -> String {
@@ -198,7 +93,216 @@ struct InspectorView: View {
     }
 }
 
-private struct InspectorMetricRow: View {
+private struct SharedCard: View {
+    @Bindable var appModel: AppModel
+
+    var body: some View {
+        InspectorSectionCard(title: "Shared") {
+            VStack(alignment: .leading, spacing: 10) {
+                SharedMetricRow(label: "Photos", value: photoCount)
+                SharedMetricRow(label: "Links", value: appModel.linkAttachmentItems.count.groupedCount)
+                SharedMetricRow(label: "Attachments", value: fileCount)
+            }
+
+            if !(appModel.selectedArchiveDetail?.mediaAssets.isEmpty ?? true) {
+                ScrollView(.horizontal) {
+                    HStack(spacing: 10) {
+                        ForEach(appModel.selectedArchiveDetail?.mediaAssets.prefix(6) ?? []) { asset in
+                            Button {
+                                appModel.presentMediaViewer(for: asset)
+                            } label: {
+                                AttachmentThumbnailView(asset: asset)
+                                    .frame(width: 72, height: 72)
+                            }
+                            .buttonStyle(.plain)
+                            .help("Open shared media")
+                        }
+                    }
+                }
+                .scrollIndicators(.hidden)
+            }
+        }
+    }
+
+    private var photoCount: String {
+        let count = appModel.selectedArchiveDetail?.mediaAssets.filter { $0.attachment.kind == .image }.count ?? 0
+        return count.groupedCount
+    }
+
+    private var fileCount: String {
+        let count = appModel.selectedArchiveDetail?.attachmentItems.filter { $0.attachment.kind == .file }.count ?? 0
+        return count.groupedCount
+    }
+}
+
+private struct ExportCard: View {
+    @Bindable var appModel: AppModel
+
+    var body: some View {
+        InspectorSectionCard(title: "Export") {
+            VStack(alignment: .leading, spacing: 10) {
+                ExportActionButton(title: "Export Conversation") {
+                    appModel.presentExport(scope: .entireConversation, format: .pdf)
+                }
+
+                ExportActionButton(title: "Export Loaded Range") {
+                    appModel.presentExport(scope: .currentLoadedRange, format: .pdf)
+                }
+
+                ExportActionButton(title: "Export JSON Archive") {
+                    appModel.presentExport(scope: .entireConversation, format: .json)
+                }
+
+                ExportActionButton(title: "Export DOCX") {
+                    appModel.presentExport(scope: .entireConversation, format: .docx)
+                }
+
+                ExportActionButton(title: "Export Shared Content") {
+                    appModel.presentSharedContentExport()
+                }
+
+                Text("Also available from File, the iRemember menu, and archive context menus.")
+                    .font(.caption)
+                    .foregroundStyle(AppTheme.tertiaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+}
+
+private struct ArchiveCard: View {
+    let archiveRangeSummary: String
+    let messageCount: String
+    let mediaCount: String
+    let participantCount: String
+    let mergeStateLabel: String
+
+    var body: some View {
+        InspectorSectionCard(title: "Archive") {
+            SharedMetricRow(label: "Range", value: archiveRangeSummary)
+            SharedMetricRow(label: "Messages", value: messageCount)
+            SharedMetricRow(label: "Media", value: mediaCount)
+            SharedMetricRow(label: "Participants", value: participantCount)
+            SharedMetricRow(label: "Merge", value: mergeStateLabel)
+        }
+    }
+}
+
+private struct MergeCard: View {
+    @Bindable var appModel: AppModel
+
+    var body: some View {
+        InspectorSectionCard(title: "Merge Identity") {
+            Text("These conversations may belong to the same contact.")
+                .font(.subheadline)
+                .fixedSize(horizontal: false, vertical: true)
+
+            ForEach(appModel.mergeSuggestionHandles, id: \.self) { handle in
+                Text(handle)
+                    .font(.caption)
+                    .foregroundStyle(AppTheme.metadataText)
+            }
+
+            HStack(spacing: 8) {
+                Button("View Merged") {
+                    Task { await appModel.setSidebarMode(.people) }
+                }
+                .buttonStyle(.borderedProminent)
+
+                Button("Keep Separate") {
+                    Task { await appModel.applyMergeDecision(.keepSeparate) }
+                }
+                .buttonStyle(.bordered)
+
+                Button("Always Merge for This Contact") {
+                    Task { await appModel.applyMergeDecision(.alwaysMerge) }
+                }
+                .buttonStyle(.bordered)
+            }
+        }
+    }
+}
+
+private struct MessageCard: View {
+    let message: Message
+
+    var body: some View {
+        InspectorSectionCard(title: "Selected Message") {
+            SharedMetricRow(label: "Sender", value: message.sender?.displayName ?? "System")
+            SharedMetricRow(label: "Sent", value: message.sentAt.compactDateTimeLabel)
+
+            if !message.body.isEmpty {
+                Text(message.body)
+                    .font(.callout)
+                    .foregroundStyle(AppTheme.metadataText)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+}
+
+private struct SelectedMediaCard: View {
+    @Bindable var appModel: AppModel
+    let asset: MediaAsset
+
+    var body: some View {
+        InspectorSectionCard(title: "Selected Media") {
+            AttachmentThumbnailView(asset: asset)
+                .frame(height: 148)
+
+            SharedMetricRow(label: "Filename", value: asset.attachment.filename)
+            SharedMetricRow(label: "Type", value: asset.attachment.kind.label)
+            SharedMetricRow(label: "Sent", value: asset.sentAt.compactDateTimeLabel)
+            SharedMetricRow(label: "Availability", value: asset.attachment.isAvailableLocally ? "Available locally" : "Original unavailable")
+
+            Button("Open Media") {
+                appModel.presentMediaViewer(for: asset)
+            }
+            .buttonStyle(.borderedProminent)
+
+            Button("Show in Conversation") {
+                Task { await appModel.revealMediaInTranscript(asset) }
+            }
+            .buttonStyle(.borderedProminent)
+        }
+    }
+}
+
+private struct SourceCard: View {
+    @Bindable var appModel: AppModel
+
+    var body: some View {
+        InspectorSectionCard(title: "Source") {
+            SharedMetricRow(label: "Mode", value: "Read-only")
+            SharedMetricRow(label: "Strategy", value: appModel.sourceStrategy.label)
+            SharedMetricRow(label: "Library", value: appModel.sourceModeName)
+        }
+    }
+}
+
+private struct InspectorSectionCard<Content: View>: View {
+    let title: String
+    @ViewBuilder let content: Content
+
+    init(title: String, @ViewBuilder content: () -> Content) {
+        self.title = title
+        self.content = content()
+    }
+
+    var body: some View {
+        GroupBox {
+            VStack(alignment: .leading, spacing: 12) {
+                content
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        } label: {
+            Text(title)
+                .font(.headline)
+        }
+    }
+}
+
+private struct SharedMetricRow: View {
     let label: String
     let value: String
 
@@ -218,25 +322,13 @@ private struct InspectorMetricRow: View {
     }
 }
 
-private struct InspectorStatPill: View {
-    let label: String
-    let value: String
+private struct ExportActionButton: View {
+    let title: String
+    let action: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(label)
-                .font(.caption2.weight(.semibold))
-                .foregroundStyle(AppTheme.metadataText)
-            Text(value)
-                .font(.subheadline.weight(.semibold))
-                .lineLimit(1)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, AppChrome.spacing12)
-        .padding(.vertical, 10)
-        .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(AppTheme.chromeBackground)
-        )
+        Button(title, action: action)
+            .buttonStyle(.bordered)
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 }

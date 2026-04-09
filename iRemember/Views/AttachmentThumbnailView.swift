@@ -3,61 +3,74 @@ import QuickLookThumbnailing
 import SwiftUI
 
 struct AttachmentThumbnailView: View {
+    enum DisplayMode {
+        case fill
+        case fit
+    }
+
     let asset: MediaAsset
+    let displayMode: DisplayMode
 
     @State private var previewImage: NSImage?
 
+    init(asset: MediaAsset, displayMode: DisplayMode = .fill) {
+        self.asset = asset
+        self.displayMode = displayMode
+    }
+
     var body: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(backgroundFill)
+        GeometryReader { proxy in
+            ZStack {
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .fill(backgroundFill)
 
-            if let previewImage {
-                Image(nsImage: previewImage)
-                    .resizable()
-                    .scaledToFill()
-                    .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-            } else {
-                VStack(spacing: 8) {
-                    Image(systemName: asset.attachment.kind.symbolName)
-                        .font(.system(size: 28, weight: .medium))
-                        .foregroundStyle(.secondary)
+                if let previewImage {
+                    Image(nsImage: previewImage)
+                        .resizable()
+                        .aspectRatio(contentMode: displayMode == .fill ? .fill : .fit)
+                        .frame(width: proxy.size.width, height: proxy.size.height)
+                        .clipped()
+                } else {
+                    VStack(spacing: 8) {
+                        Image(systemName: asset.attachment.kind.symbolName)
+                            .font(.system(size: 28, weight: .medium))
+                            .foregroundStyle(.secondary)
 
-                    Text(placeholderLabel)
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(.secondary)
-                }
-            }
-
-            if asset.attachment.kind == .video {
-                Image(systemName: "play.fill")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .padding(12)
-                    .background(AppTheme.videoPlayOverlay, in: Circle())
-            }
-
-            if !asset.attachment.isAvailableLocally {
-                VStack {
-                    Spacer()
-
-                    HStack(spacing: 6) {
-                        Image(systemName: "icloud.slash")
-                        Text("Not on this Mac")
+                        Text(placeholderLabel)
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
                     }
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(AppTheme.metadataText)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 8)
-                    .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
                     .padding(12)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
+
+                if asset.attachment.kind == .video {
+                    Image(systemName: "play.fill")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .padding(12)
+                        .background(AppTheme.videoPlayOverlay, in: Circle())
+                }
+
+                if !asset.attachment.isAvailableLocally {
+                    VStack {
+                        Spacer()
+
+                        HStack(spacing: 6) {
+                            Image(systemName: "icloud.slash")
+                            Text("Not on this Mac")
+                        }
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(AppTheme.metadataText)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 8)
+                        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                        .padding(12)
+                    }
                 }
             }
-        }
-        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .stroke(AppTheme.bubbleStroke, lineWidth: 1)
+            .frame(width: proxy.size.width, height: proxy.size.height)
+            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
         }
         .task(id: asset.attachment.id) {
             await loadPreview()

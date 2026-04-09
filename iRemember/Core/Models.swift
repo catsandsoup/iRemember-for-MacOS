@@ -101,8 +101,10 @@ public enum MediaFilter: String, CaseIterable, Identifiable, Sendable {
 
 public enum SearchScope: String, CaseIterable, Identifiable, Sendable {
     case all
-    case text
+    case messages
     case people
+    case media
+    case links
     case attachments
 
     public var id: String { rawValue }
@@ -110,9 +112,25 @@ public enum SearchScope: String, CaseIterable, Identifiable, Sendable {
     public var label: String {
         switch self {
         case .all: "All"
-        case .text: "Text"
+        case .messages: "Messages"
         case .people: "People"
-        case .attachments: "Attachments"
+        case .media: "Media"
+        case .links: "Links"
+        case .attachments: "Files"
+        }
+    }
+}
+
+public enum SidebarMode: String, CaseIterable, Identifiable, Sendable {
+    case threads
+    case people
+
+    public var id: String { rawValue }
+
+    public var label: String {
+        switch self {
+        case .threads: "Threads"
+        case .people: "People"
         }
     }
 }
@@ -129,6 +147,47 @@ public enum TimelineRange: String, CaseIterable, Identifiable, Sendable {
         case .week: "Week"
         case .month: "Month"
         case .year: "Year"
+        }
+    }
+}
+
+public enum TranscriptAnchor: Hashable, Sendable {
+    case latest
+    case message(UUID)
+    case reply(UUID)
+    case search(UUID)
+    case timeline(Date)
+    case date(Date)
+}
+
+public enum ExportFormat: String, CaseIterable, Identifiable, Sendable {
+    case pdf
+    case json
+    case docx
+
+    public var id: String { rawValue }
+
+    public var label: String {
+        rawValue.uppercased()
+    }
+
+    public var fileExtension: String {
+        rawValue
+    }
+}
+
+public enum ExportScope: String, CaseIterable, Identifiable, Sendable {
+    case entireConversation
+    case currentLoadedRange
+    case customDateRange
+
+    public var id: String { rawValue }
+
+    public var label: String {
+        switch self {
+        case .entireConversation: "Entire Archive"
+        case .currentLoadedRange: "Loaded Context"
+        case .customDateRange: "Selected Date Range"
         }
     }
 }
@@ -150,6 +209,165 @@ public struct Participant: Identifiable, Hashable, Sendable {
         self.handle = handle
         self.accentColorName = accentColorName
     }
+}
+
+public enum ArchiveKind: String, Hashable, Sendable {
+    case thread
+    case person
+}
+
+public struct ArchiveSummary: Identifiable, Hashable, Sendable {
+    public let id: String
+    public let kind: ArchiveKind
+    public let title: String
+    public let secondaryText: String
+    public let lastActivityAt: Date
+    public let representativeConversationID: UUID
+    public let conversationIDs: [UUID]
+    public let participants: [Participant]
+    public let linkedHandles: [String]
+    public let messageCount: Int?
+    public let mediaCount: Int?
+    public let isPinned: Bool
+
+    public nonisolated init(
+        id: String,
+        kind: ArchiveKind,
+        title: String,
+        secondaryText: String,
+        lastActivityAt: Date,
+        representativeConversationID: UUID,
+        conversationIDs: [UUID],
+        participants: [Participant],
+        linkedHandles: [String],
+        messageCount: Int?,
+        mediaCount: Int?,
+        isPinned: Bool
+    ) {
+        self.id = id
+        self.kind = kind
+        self.title = title
+        self.secondaryText = secondaryText
+        self.lastActivityAt = lastActivityAt
+        self.representativeConversationID = representativeConversationID
+        self.conversationIDs = conversationIDs
+        self.participants = participants
+        self.linkedHandles = linkedHandles
+        self.messageCount = messageCount
+        self.mediaCount = mediaCount
+        self.isPinned = isPinned
+    }
+}
+
+public struct ArchiveMessageIndexEntry: Identifiable, Hashable, Sendable {
+    public let id: UUID
+    public let guid: String?
+    public let conversationID: UUID
+    public let sourceIndex: Int
+    public let sentAt: Date
+
+    public nonisolated init(
+        id: UUID,
+        guid: String?,
+        conversationID: UUID,
+        sourceIndex: Int,
+        sentAt: Date
+    ) {
+        self.id = id
+        self.guid = guid
+        self.conversationID = conversationID
+        self.sourceIndex = sourceIndex
+        self.sentAt = sentAt
+    }
+}
+
+public struct ArchiveDetail: Hashable, Sendable {
+    public let summary: ArchiveSummary
+    public let messageIndex: [ArchiveMessageIndexEntry]
+    public let attachmentItems: [AttachmentItem]
+
+    public nonisolated init(
+        summary: ArchiveSummary,
+        messageIndex: [ArchiveMessageIndexEntry],
+        attachmentItems: [AttachmentItem]
+    ) {
+        self.summary = summary
+        self.messageIndex = messageIndex
+        self.attachmentItems = attachmentItems
+    }
+
+    public nonisolated var mediaAssets: [MediaAsset] {
+        attachmentItems.compactMap(\.mediaAsset)
+    }
+}
+
+public enum SearchResultKind: String, CaseIterable, Identifiable, Sendable {
+    case conversation
+    case message
+    case media
+    case link
+    case attachment
+
+    public var id: String { rawValue }
+
+    public var label: String {
+        switch self {
+        case .conversation: "Conversation"
+        case .message: "Message"
+        case .media: "Media"
+        case .link: "Link"
+        case .attachment: "Attachment"
+        }
+    }
+
+    public var symbolName: String {
+        switch self {
+        case .conversation: "bubble.left.and.bubble.right"
+        case .message: "text.bubble"
+        case .media: "photo.on.rectangle"
+        case .link: "link"
+        case .attachment: "paperclip"
+        }
+    }
+}
+
+public struct ArchiveSearchResult: Identifiable, Hashable, Sendable {
+    public let id: String
+    public let kind: SearchResultKind
+    public let conversationID: UUID
+    public let messageID: UUID?
+    public let attachmentID: UUID?
+    public let archiveTitle: String
+    public let title: String
+    public let subtitle: String
+    public let sentAt: Date?
+
+    public nonisolated init(
+        id: String,
+        kind: SearchResultKind,
+        conversationID: UUID,
+        messageID: UUID? = nil,
+        attachmentID: UUID? = nil,
+        archiveTitle: String,
+        title: String,
+        subtitle: String,
+        sentAt: Date?
+    ) {
+        self.id = id
+        self.kind = kind
+        self.conversationID = conversationID
+        self.messageID = messageID
+        self.attachmentID = attachmentID
+        self.archiveTitle = archiveTitle
+        self.title = title
+        self.subtitle = subtitle
+        self.sentAt = sentAt
+    }
+}
+
+public enum MergeDecisionAction: String, Hashable, Sendable {
+    case keepSeparate
+    case alwaysMerge
 }
 
 public struct Attachment: Identifiable, Hashable, Sendable {
@@ -339,10 +557,12 @@ public struct AttachmentItem: Identifiable, Hashable, Sendable {
 
 public struct MessageIndexEntry: Identifiable, Hashable, Sendable {
     public let id: UUID
+    public let guid: String?
     public let sentAt: Date
 
-    public nonisolated init(id: UUID, sentAt: Date) {
+    public nonisolated init(id: UUID, guid: String? = nil, sentAt: Date) {
         self.id = id
+        self.guid = guid
         self.sentAt = sentAt
     }
 }
