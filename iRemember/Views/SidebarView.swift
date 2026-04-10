@@ -24,13 +24,13 @@ struct SidebarView: View {
             }
         }
         .listStyle(.sidebar)
-        .navigationSplitViewColumnWidth(min: 220, ideal: 260, max: 300)
         .onChange(of: appModel.searchText) { _, _ in
             appModel.persistSessionIfPossible()
         }
         .onChange(of: appModel.searchScope) { _, _ in
             appModel.persistSessionIfPossible()
         }
+        .navigationSplitViewColumnWidth(min: 220, ideal: 260, max: 300)
     }
 
     @ViewBuilder

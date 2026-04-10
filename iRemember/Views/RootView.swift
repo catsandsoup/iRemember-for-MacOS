@@ -36,7 +36,11 @@ struct RootView: View {
     private var rootContent: some View {
         switch appModel.accessState {
         case .onboarding:
-            OnboardingView(appModel: appModel)
+            if appModel.setupSnapshot.isReady {
+                starterShell
+            } else {
+                OnboardingView(appModel: appModel)
+            }
         case .loading:
             LibraryLoadingView(appModel: appModel)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -49,6 +53,15 @@ struct RootView: View {
     }
 
     private var readyShell: some View {
+        workspaceShell(isLibraryLoaded: true)
+    }
+
+    private var starterShell: some View {
+        ConversationContentView(appModel: appModel)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private func workspaceShell(isLibraryLoaded: Bool) -> some View {
         NavigationSplitView(columnVisibility: $splitViewVisibility) {
             SidebarView(appModel: appModel)
                 .accessibilityIdentifier("sidebar-pane")
@@ -58,18 +71,12 @@ struct RootView: View {
                 .accessibilityIdentifier("content-pane")
         }
         .navigationSplitViewStyle(.balanced)
-        .searchable(
-            text: $appModel.searchText,
-            placement: .toolbar,
-            prompt: "Search messages, contacts, and files"
-        )
-        .inspector(isPresented: $appModel.isInspectorVisible) {
-            InspectorView(appModel: appModel)
-                .accessibilityIdentifier("inspector-pane")
-        }
-        .inspectorColumnWidth(min: 280, ideal: 320, max: 360)
+        .modifier(WorkspaceSearchModifier(enabled: isLibraryLoaded, appModel: appModel))
+        .modifier(WorkspaceInspectorModifier(enabled: isLibraryLoaded, appModel: appModel))
         .toolbar {
-            ReadyToolbar(appModel: appModel)
+            if isLibraryLoaded {
+                ReadyToolbar(appModel: appModel)
+            }
         }
         .toolbar(removing: .title)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -86,6 +93,41 @@ struct RootView: View {
                 }
             }
         )
+    }
+}
+
+private struct WorkspaceSearchModifier: ViewModifier {
+    let enabled: Bool
+    @Bindable var appModel: AppModel
+
+    func body(content: Content) -> some View {
+        if enabled {
+            content.searchable(
+                text: $appModel.searchText,
+                placement: .toolbar,
+                prompt: "Search messages, contacts, and files"
+            )
+        } else {
+            content
+        }
+    }
+}
+
+private struct WorkspaceInspectorModifier: ViewModifier {
+    let enabled: Bool
+    @Bindable var appModel: AppModel
+
+    func body(content: Content) -> some View {
+        if enabled {
+            content
+                .inspector(isPresented: $appModel.isInspectorVisible) {
+                    InspectorView(appModel: appModel)
+                        .accessibilityIdentifier("inspector-pane")
+                }
+                .inspectorColumnWidth(min: 280, ideal: 320, max: 360)
+        } else {
+            content
+        }
     }
 }
 
@@ -427,11 +469,6 @@ private struct LibraryFailureView: View {
                         .buttonStyle(.bordered)
                     }
                 }
-
-                SettingsLink {
-                    Label("App Settings", systemImage: "gearshape")
-                }
-                .buttonStyle(.link)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }

@@ -5,27 +5,50 @@ struct SettingsView: View {
 
     var body: some View {
         TabView {
-            Form {
-                LabeledContent("Current strategy") {
-                    Text(appModel.sourceStrategy.label)
-                }
+            Tab("General", systemImage: "gearshape") {
+                Form {
+                    Section("Library") {
+                        LabeledContent("Source") {
+                            Text(appModel.sourceModeName)
+                        }
 
-                LabeledContent("Current source") {
-                    Text(appModel.sourceModeName)
-                }
+                        LabeledContent("Access") {
+                            Text("Read-only")
+                        }
 
-                LabeledContent("Transcript policy") {
-                    Text("Windowed around active focus")
-                }
+                        Text(appModel.sourceModeDescription)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
 
-                LabeledContent("Current library mode") {
-                    Text(appModel.sourceModeDescription)
-                }
+                    Section("Contacts") {
+                        LabeledContent("Status") {
+                            Text(appModel.contactIdentityAccessState.label)
+                        }
 
-                LabeledContent("Messages paths") {
-                    VStack(alignment: .leading, spacing: 4) {
+                        Text(appModel.archiveIdentitySourceSummary)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+
+                        ContactsAccessActions(appModel: appModel)
+                    }
+                }
+                .formStyle(.grouped)
+                .padding(20)
+                .frame(minWidth: 420, idealWidth: 460, minHeight: 300)
+            }
+
+            Tab("Privacy", systemImage: "hand.raised") {
+                Form {
+                    Section("How iRemember works") {
+                        Label("Messages stay on this Mac.", systemImage: "lock.shield")
+                        Label("The live archive opens in read-only mode.", systemImage: "externaldrive.badge.checkmark")
+                        Label("Names from Contacts are optional and can be enabled later.", systemImage: "person.crop.circle")
+                    }
+
+                    Section("Library Locations") {
                         ForEach(appModel.sourceLocations) { location in
-                            VStack(alignment: .leading, spacing: 2) {
+                            VStack(alignment: .leading, spacing: 4) {
                                 Text(location.label)
                                     .font(.caption.weight(.semibold))
                                     .foregroundStyle(.secondary)
@@ -34,47 +57,38 @@ struct SettingsView: View {
                                     .font(.callout.monospaced())
                                     .textSelection(.enabled)
                             }
+                            .padding(.vertical, 2)
                         }
                     }
                 }
-            }
-            .padding()
-            .tabItem {
-                Label("General", systemImage: "gearshape")
-            }
-
-            Form {
-                Toggle("Enable local index encryption when available", isOn: .constant(true))
-                Toggle("Exclude message bodies from logs", isOn: .constant(true))
-                Toggle("Require confirmation before export", isOn: .constant(true))
-
-                Text("The live Messages source reads only local files. Future derived indexes and caches should remain local, transparent, and opt-in.")
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            .padding()
-            .tabItem {
-                Label("Privacy", systemImage: "hand.raised")
-            }
-
-            Form {
-                LabeledContent("Warm launch target") {
-                    Text("< 2 seconds")
-                }
-
-                LabeledContent("Date jump target") {
-                    Text("< 300 ms median")
-                }
-
-                LabeledContent("Media grid open target") {
-                    Text("< 500 ms")
-                }
-            }
-            .padding()
-            .tabItem {
-                Label("Performance", systemImage: "speedometer")
+                .formStyle(.grouped)
+                .padding(20)
+                .frame(minWidth: 420, idealWidth: 460, minHeight: 300)
             }
         }
-        .padding(20)
+        .padding(12)
+    }
+}
+
+private struct ContactsAccessActions: View {
+    @Bindable var appModel: AppModel
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            if appModel.canRequestContactsAccess {
+                Button("Use Contacts for Names") {
+                    Task { await appModel.requestContactsAccess() }
+                }
+                .buttonStyle(.borderedProminent)
+            } else if appModel.canOpenContactsSettings {
+                OpenContactsSettingsButton()
+                    .buttonStyle(.bordered)
+            } else if appModel.canRefreshContactsIdentity {
+                Button("Refresh Contact Matching") {
+                    Task { await appModel.refreshContactsIdentity() }
+                }
+                .buttonStyle(.bordered)
+            }
+        }
     }
 }

@@ -387,6 +387,7 @@ public final class AppModel {
     private let sampleFallback: (any MessagesSource)?
     private let contactIdentityResolver: any ContactIdentityResolving
     private var source: any MessagesSource
+    private var sourceConversations: [Conversation] = []
     private var archiveDetailCache: [String: ArchiveDetail] = [:]
     private var archiveSessionStates: [String: ConversationSessionState] = [:]
     private var timelineNavigationSnapshots: [String: TimelineNavigationSnapshot] = [:]
@@ -694,6 +695,19 @@ public final class AppModel {
         }
     }
 
+    public var canRequestContactsAccess: Bool {
+        sourceStrategy == .liveBrowse && contactIdentityAccessState == .notDetermined
+    }
+
+    public var canOpenContactsSettings: Bool {
+        sourceStrategy == .liveBrowse &&
+        (contactIdentityAccessState == .denied || contactIdentityAccessState == .restricted)
+    }
+
+    public var canRefreshContactsIdentity: Bool {
+        sourceStrategy == .liveBrowse && contactIdentityAccessState.usesContacts
+    }
+
     public var mergeSuggestionHandles: [String] {
         suggestedMergedArchive?.linkedHandles ?? selectedArchiveSummary?.linkedHandles ?? []
     }
@@ -862,6 +876,19 @@ public final class AppModel {
             return
         }
         await loadLibrary(using: sampleFallback)
+    }
+
+    public func requestContactsAccess() async {
+        let accessState = await contactIdentityResolver.requestAccessIfNeeded(for: source.strategy)
+        guard accessState.usesContacts else { return }
+        reapplyConversationIdentity()
+        await refreshSearchResults()
+    }
+
+    public func refreshContactsIdentity() async {
+        await contactIdentityResolver.prepare(for: source.strategy)
+        reapplyConversationIdentity()
+        await refreshSearchResults()
     }
 
     public func retryCurrentLibrary() async {
@@ -1249,6 +1276,7 @@ public final class AppModel {
         selectedPersonArchiveID = nil
         selectedMessageID = nil
         selectedMediaAssetID = nil
+        sourceConversations = []
         archiveDetailCache = [:]
         archiveSessionStates = [:]
         clearJumpOrigin()
@@ -1264,7 +1292,8 @@ public final class AppModel {
                 }
             })
             await contactIdentityResolver.prepare(for: newSource.strategy)
-            conversations = resolvedConversations(from: snapshot.conversations)
+            sourceConversations = snapshot.conversations
+            conversations = resolvedConversations(from: sourceConversations)
             setupSnapshot = await source.inspectSetup()
 
             applyInitialArchiveSelection()
@@ -1282,8 +1311,19 @@ public final class AppModel {
             accessState = .ready
             await refreshSearchResults()
         } catch {
+            sourceConversations = []
             conversations = []
             await applyLoadFailure(error)
+        }
+    }
+
+    private func reapplyConversationIdentity() {
+        guard !sourceConversations.isEmpty else { return }
+
+        conversations = resolvedConversations(from: sourceConversations)
+
+        if let selectedConversationID {
+            selectedPersonArchiveID = personArchiveID(for: selectedConversationID)
         }
     }
 
@@ -2221,6 +2261,7 @@ public final class AppModel {
 protocol ContactIdentityResolving: AnyObject {
     var accessState: ContactIdentityAccessState { get }
     func prepare(for strategy: SourceStrategy) async
+    func requestAccessIfNeeded(for strategy: SourceStrategy) async -> ContactIdentityAccessState
     func resolvedParticipant(_ participant: Participant) -> Participant
     func resolvedConversationTitle(for conversation: Conversation, participants: [Participant]) -> String
     func contactIdentityKey(for handle: String) -> String?
@@ -2247,23 +2288,12 @@ final class SystemContactIdentityResolver: ContactIdentityResolving {
         switch CNContactStore.authorizationStatus(for: .contacts) {
         case .authorized:
             accessState = .authorized
-            break
         case .limited:
             accessState = .limited
-            break
         case .notDetermined:
             accessState = .notDetermined
-            let granted = await withCheckedContinuation { continuation in
-                store.requestAccess(for: .contacts) { granted, _ in
-                    continuation.resume(returning: granted)
-                }
-            }
-            guard granted else {
-                accessState = .denied
-                matchesByHandle = [:]
-                return
-            }
-            accessState = .authorized
+            matchesByHandle = [:]
+            return
         case .denied:
             accessState = .denied
             matchesByHandle = [:]
@@ -2279,6 +2309,45 @@ final class SystemContactIdentityResolver: ContactIdentityResolving {
         }
 
         matchesByHandle = loadMatches(from: store)
+    }
+
+    func requestAccessIfNeeded(for strategy: SourceStrategy) async -> ContactIdentityAccessState {
+        guard strategy == .liveBrowse else {
+            accessState = .unavailable
+            matchesByHandle = [:]
+            return accessState
+        }
+
+        let store = CNContactStore()
+        switch CNContactStore.authorizationStatus(for: .contacts) {
+        case .authorized:
+            accessState = .authorized
+        case .limited:
+            accessState = .limited
+        case .notDetermined:
+            let _ = await withCheckedContinuation { continuation in
+                store.requestAccess(for: .contacts) { granted, _ in
+                    continuation.resume(returning: granted)
+                }
+            }
+            await prepare(for: strategy)
+            return accessState
+        case .denied:
+            accessState = .denied
+            matchesByHandle = [:]
+            return accessState
+        case .restricted:
+            accessState = .restricted
+            matchesByHandle = [:]
+            return accessState
+        @unknown default:
+            accessState = .unavailable
+            matchesByHandle = [:]
+            return accessState
+        }
+
+        matchesByHandle = loadMatches(from: store)
+        return accessState
     }
 
     func resolvedParticipant(_ participant: Participant) -> Participant {

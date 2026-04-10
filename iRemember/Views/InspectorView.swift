@@ -374,6 +374,21 @@ private struct LibrarySection: View {
             InspectorLabeledValue(label: "Source", value: appModel.sourceModeName)
             InspectorLabeledValue(label: "Contacts", value: appModel.archiveIdentitySourceSummary)
             InspectorLabeledValue(label: "Access", value: "Read-only")
+
+            if appModel.canRequestContactsAccess {
+                Button("Use Contacts for Names") {
+                    Task { await appModel.requestContactsAccess() }
+                }
+                .buttonStyle(.borderedProminent)
+            } else if appModel.canOpenContactsSettings {
+                OpenContactsSettingsButton()
+                    .buttonStyle(.bordered)
+            } else if appModel.canRefreshContactsIdentity {
+                Button("Refresh Contact Matching") {
+                    Task { await appModel.refreshContactsIdentity() }
+                }
+                .buttonStyle(.bordered)
+            }
         }
     }
 }
