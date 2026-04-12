@@ -333,7 +333,7 @@ public final class AppModel {
     public private(set) var selectedPersonArchiveID: String?
     public var selectedMessageID: UUID?
     public var selectedMediaAssetID: UUID?
-    public var sidebarMode: SidebarMode = .people
+    public var sidebarMode: SidebarMode = .threads
     public var searchText = ""
     public var searchScope: SearchScope = .all
     public var contentMode: ContentMode = .transcript
@@ -483,6 +483,12 @@ public final class AppModel {
                 mediaCount: conversation.mediaCount,
                 isPinned: conversation.isPinned
             )
+        }
+        .sorted { lhs, rhs in
+            if lhs.isPinned != rhs.isPinned {
+                return lhs.isPinned && !rhs.isPinned
+            }
+            return lhs.lastActivityAt > rhs.lastActivityAt
         }
     }
 
@@ -809,7 +815,7 @@ public final class AppModel {
                 sidebarMode = pendingRestoredSession.sidebarMode
                 isInspectorVisible = pendingRestoredSession.inspectorVisible
                 contentMode = pendingRestoredSession.contentMode
-                searchText = pendingRestoredSession.searchText
+                searchText = DisplayText.searchQuery(pendingRestoredSession.searchText)
                 searchScope = pendingRestoredSession.searchScope
             }
             AppTelemetry.session.info("Loaded persistence state")
@@ -842,7 +848,7 @@ public final class AppModel {
                 activeAnchor: activeTranscriptAnchor,
                 inspectorVisible: isInspectorVisible,
                 contentMode: contentMode,
-                searchText: searchText,
+                searchText: DisplayText.searchQuery(searchText),
                 searchScope: searchScope
             )
         } catch {
@@ -1035,6 +1041,10 @@ public final class AppModel {
         guard let summary else { return }
 
         if summary.kind == .person {
+            if sidebarMode != .people {
+                persistCurrentArchiveState()
+                sidebarMode = .people
+            }
             if selectedPersonArchiveID == summary.id, sidebarMode == .people {
                 contentMode = .transcript
                 return
@@ -1043,6 +1053,10 @@ public final class AppModel {
             selectedPersonArchiveID = summary.id
             selectedConversationID = summary.representativeConversationID
         } else {
+            if sidebarMode != .threads {
+                persistCurrentArchiveState()
+                sidebarMode = .threads
+            }
             selectedPersonArchiveID = nil
             await selectConversation(summary.representativeConversationID)
             return
@@ -1055,6 +1069,7 @@ public final class AppModel {
         applyTranscriptWindow([], range: 0..<0)
         AppTelemetry.archive.info("Selected merged archive")
         await loadSelectedConversationIfNeeded()
+        persistSessionIfPossible()
     }
 
     public func selectMessage(_ message: Message, preserveHighlight: Bool = false) {
@@ -1923,7 +1938,7 @@ public final class AppModel {
                     conversationID: archive.representativeConversationID,
                     archiveTitle: archive.title,
                     title: archive.title,
-                    subtitle: archive.secondaryText,
+                    subtitle: DisplayText.searchSubtitle(archive.secondaryText),
                     sentAt: archive.lastActivityAt
                 )
             }
@@ -2184,7 +2199,7 @@ public final class AppModel {
                 attachmentID: result.attachmentID,
                 archiveTitle: archive.title,
                 title: archive.title,
-                subtitle: archive.secondaryText,
+                subtitle: DisplayText.searchSubtitle(archive.secondaryText),
                 sentAt: archive.lastActivityAt
             )
         }
@@ -2197,7 +2212,7 @@ public final class AppModel {
             attachmentID: result.attachmentID,
             archiveTitle: archive.title,
             title: result.title,
-            subtitle: result.subtitle,
+            subtitle: DisplayText.searchSubtitle(result.subtitle),
             sentAt: result.sentAt
         )
     }
@@ -2658,7 +2673,7 @@ public struct SampleMessagesSource: MessagesSource {
                 detail: "The sample library is ready."
             )
         )
-        return LibrarySnapshot(conversations: records.values.map(\.detail.conversation))
+        return LibrarySnapshot(conversations: sortedRecords.map(\.detail.conversation))
     }
 
     public func loadConversationDetail(id: UUID) async throws -> ConversationDetail {
@@ -2690,7 +2705,7 @@ public struct SampleMessagesSource: MessagesSource {
 
         var results: [ArchiveSearchResult] = []
 
-        for record in records.values {
+        for record in sortedRecords {
             let conversation = record.detail.conversation
 
             if results.count < limit &&
@@ -2705,7 +2720,7 @@ public struct SampleMessagesSource: MessagesSource {
                         conversationID: conversation.id,
                         archiveTitle: conversation.title,
                         title: conversation.title,
-                        subtitle: conversation.snippet,
+                        subtitle: DisplayText.searchSubtitle(conversation.snippet),
                         sentAt: conversation.lastActivityAt
                     )
                 )
@@ -2734,7 +2749,7 @@ public struct SampleMessagesSource: MessagesSource {
                             messageID: message.id,
                             archiveTitle: conversation.title,
                             title: message.sender?.displayName ?? conversation.title,
-                            subtitle: message.body,
+                            subtitle: DisplayText.searchSubtitle(message.body),
                             sentAt: message.sentAt
                         )
                     )
@@ -2770,7 +2785,7 @@ public struct SampleMessagesSource: MessagesSource {
                                 attachmentID: attachment.id,
                                 archiveTitle: conversation.title,
                                 title: attachment.filename,
-                                subtitle: message.body,
+                                subtitle: DisplayText.searchSubtitle(message.body),
                                 sentAt: message.sentAt
                             )
                         )
@@ -2784,6 +2799,19 @@ public struct SampleMessagesSource: MessagesSource {
         }
 
         return Array(results.prefix(limit))
+    }
+
+    private var sortedRecords: [SampleConversationRecord] {
+        records.values.sorted { lhs, rhs in
+            let left = lhs.detail.conversation
+            let right = rhs.detail.conversation
+
+            if left.isPinned != right.isPinned {
+                return left.isPinned && !right.isPinned
+            }
+
+            return left.lastActivityAt > right.lastActivityAt
+        }
     }
 }
 
@@ -3008,7 +3036,7 @@ enum SampleLibraryFactory {
             id: conversationID,
             title: title,
             participants: participants,
-            snippet: messages.last?.body ?? "",
+            snippet: DisplayText.conversationSnippet(messages.last?.body ?? ""),
             lastActivityAt: messages.last?.sentAt ?? .now,
             messageCount: messages.count,
             mediaCount: attachmentItems.compactMap(\.mediaAsset).count,

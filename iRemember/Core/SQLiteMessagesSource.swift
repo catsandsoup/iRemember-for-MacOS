@@ -318,7 +318,7 @@ public actor SQLiteMessagesSource: MessagesSource {
                 conversationID: conversation.id,
                 archiveTitle: conversation.title,
                 title: conversation.title,
-                subtitle: conversation.snippet,
+                subtitle: DisplayText.searchSubtitle(conversation.snippet),
                 sentAt: conversation.lastActivityAt
             )
         })
@@ -390,7 +390,7 @@ public actor SQLiteMessagesSource: MessagesSource {
                         messageID: messageID,
                         archiveTitle: conversation.title,
                         title: sender?.displayName ?? conversation.title,
-                        subtitle: subtitle,
+                        subtitle: DisplayText.searchSubtitle(subtitle),
                         sentAt: sentAt
                     )
                 )
@@ -493,7 +493,7 @@ public actor SQLiteMessagesSource: MessagesSource {
                         attachmentID: attachment.id,
                         archiveTitle: conversation.title,
                         title: attachment.filename,
-                        subtitle: subtitle,
+                        subtitle: DisplayText.searchSubtitle(subtitle),
                         sentAt: sentAt
                     )
                 )
@@ -613,11 +613,13 @@ public actor SQLiteMessagesSource: MessagesSource {
             let conversationID = stableUUID(for: "chat:\(summary.guid ?? String(summary.chatRowID))")
             let participants = resolvedConversationParticipants(handles: participantsByChat[summary.chatRowID, default: []])
             let title = conversationTitle(displayName: summary.displayName, chatIdentifier: summary.chatIdentifier, participants: participants)
-            let snippet = resolvedVisibleBody(
-                text: summary.latestText,
-                attributedBody: summary.latestAttributedBody,
-                hasAttachments: summary.latestHasAttachments,
-                context: .conversationPreview
+            let snippet = DisplayText.conversationSnippet(
+                resolvedVisibleBody(
+                    text: summary.latestText,
+                    attributedBody: summary.latestAttributedBody,
+                    hasAttachments: summary.latestHasAttachments,
+                    context: .conversationPreview
+                )
             )
 
             let conversation = Conversation(

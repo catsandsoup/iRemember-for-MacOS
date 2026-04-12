@@ -1,6 +1,46 @@
 import Foundation
 import SwiftData
 
+enum DisplayText {
+    nonisolated static func conversationSnippet(_ text: String) -> String {
+        preview(text, maxLength: 220)
+    }
+
+    nonisolated static func searchSubtitle(_ text: String) -> String {
+        preview(text, maxLength: 280)
+    }
+
+    nonisolated static func searchQuery(_ text: String) -> String {
+        let collapsed = collapsedWhitespace(in: text)
+        let maxLength = 160
+
+        guard collapsed.count > maxLength else {
+            return collapsed
+        }
+
+        let endIndex = collapsed.index(collapsed.startIndex, offsetBy: maxLength)
+        return String(collapsed[..<endIndex]).trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private nonisolated static func preview(_ text: String, maxLength: Int) -> String {
+        let collapsed = collapsedWhitespace(in: text)
+
+        guard collapsed.count > maxLength else {
+            return collapsed
+        }
+
+        let endIndex = collapsed.index(collapsed.startIndex, offsetBy: maxLength)
+        let prefix = collapsed[..<endIndex].trimmingCharacters(in: .whitespacesAndNewlines)
+        return "\(prefix)…"
+    }
+
+    private nonisolated static func collapsedWhitespace(in text: String) -> String {
+        text
+            .replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+}
+
 @Model
 final class PersistedAppSession {
     @Attribute(.unique) var key: String
@@ -150,25 +190,32 @@ final class AppPersistenceCoordinator {
         searchText: String,
         searchScope: SearchScope
     ) throws {
-        let stored = try existingSession() ?? PersistedAppSession(
-            sidebarModeRawValue: sidebarMode.rawValue,
-            archiveKindRawValue: archiveSummary.kind.rawValue,
-            archiveID: archiveSummary.id,
-            representativeConversationID: archiveSummary.representativeConversationID,
-            transcriptWindowLowerBound: transcriptWindow.lowerBound,
-            transcriptWindowUpperBound: transcriptWindow.upperBound,
-            selectedMessageID: selectedMessageID,
-            timelineAnchorDate: timelineAnchorDate,
-            activeAnchorKind: encodedAnchor(activeAnchor).kind,
-            activeAnchorMessageID: encodedAnchor(activeAnchor).messageID,
-            activeAnchorDate: encodedAnchor(activeAnchor).date,
-            inspectorVisible: inspectorVisible,
-            contentModeRawValue: contentMode.rawValue,
-            searchText: searchText,
-            searchScopeRawValue: searchScope.rawValue
-        )
-
         let encoded = encodedAnchor(activeAnchor)
+        let stored: PersistedAppSession
+
+        if let existing = try existingSession() {
+            stored = existing
+        } else {
+            stored = PersistedAppSession(
+                sidebarModeRawValue: sidebarMode.rawValue,
+                archiveKindRawValue: archiveSummary.kind.rawValue,
+                archiveID: archiveSummary.id,
+                representativeConversationID: archiveSummary.representativeConversationID,
+                transcriptWindowLowerBound: transcriptWindow.lowerBound,
+                transcriptWindowUpperBound: transcriptWindow.upperBound,
+                selectedMessageID: selectedMessageID,
+                timelineAnchorDate: timelineAnchorDate,
+                activeAnchorKind: encoded.kind,
+                activeAnchorMessageID: encoded.messageID,
+                activeAnchorDate: encoded.date,
+                inspectorVisible: inspectorVisible,
+                contentModeRawValue: contentMode.rawValue,
+                searchText: searchText,
+                searchScopeRawValue: searchScope.rawValue
+            )
+            modelContext.insert(stored)
+        }
+
         stored.sidebarModeRawValue = sidebarMode.rawValue
         stored.archiveKindRawValue = archiveSummary.kind.rawValue
         stored.archiveID = archiveSummary.id
@@ -185,10 +232,6 @@ final class AppPersistenceCoordinator {
         stored.searchText = searchText
         stored.searchScopeRawValue = searchScope.rawValue
         stored.updatedAt = .now
-
-        if stored.modelContext == nil {
-            modelContext.insert(stored)
-        }
 
         try modelContext.save()
     }
@@ -209,18 +252,22 @@ final class AppPersistenceCoordinator {
         personArchiveID: String,
         action: MergeDecisionAction
     ) throws {
-        let stored = try existingMergeDecision(for: conversationID) ?? PersistedMergeDecision(
-            conversationID: conversationID.uuidString,
-            personArchiveID: personArchiveID,
-            actionRawValue: action.rawValue
-        )
+        let stored: PersistedMergeDecision
+
+        if let existing = try existingMergeDecision(for: conversationID) {
+            stored = existing
+        } else {
+            stored = PersistedMergeDecision(
+                conversationID: conversationID.uuidString,
+                personArchiveID: personArchiveID,
+                actionRawValue: action.rawValue
+            )
+            modelContext.insert(stored)
+        }
+
         stored.personArchiveID = personArchiveID
         stored.actionRawValue = action.rawValue
         stored.updatedAt = .now
-
-        if stored.modelContext == nil {
-            modelContext.insert(stored)
-        }
 
         try modelContext.save()
     }

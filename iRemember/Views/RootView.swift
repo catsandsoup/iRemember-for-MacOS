@@ -112,7 +112,10 @@ private struct SidebarSearchModifier: ViewModifier {
     func body(content: Content) -> some View {
         if enabled {
             content.searchable(
-                text: $appModel.searchText,
+                text: Binding(
+                    get: { appModel.searchText },
+                    set: { appModel.searchText = DisplayText.searchQuery($0) }
+                ),
                 placement: .sidebar,
                 prompt: "Search messages, contacts, and files"
             )
@@ -203,22 +206,26 @@ private struct ArchiveToolbarTitleView: View {
                     Text(archive.title)
                         .font(.headline)
                         .lineLimit(1)
+                        .truncationMode(.tail)
 
                     Text(appModel.currentArchiveSubtitle)
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
+                        .truncationMode(.tail)
                 }
 
                 VStack(spacing: 1) {
                     Text(archive.title)
                         .font(.headline)
                         .lineLimit(1)
+                        .truncationMode(.tail)
 
                     Text(appModel.currentArchiveSubtitle)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
+                        .truncationMode(.tail)
                 }
             }
             .frame(maxWidth: 240, alignment: .leading)

@@ -172,6 +172,7 @@ private struct ArchiveRow: View {
                 Text(archive.title)
                     .font(.body.weight(.medium))
                     .lineLimit(1)
+                    .truncationMode(.tail)
 
                 if archive.isPinned {
                     Image(systemName: "pin.fill")
@@ -191,6 +192,7 @@ private struct ArchiveRow: View {
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
+                .truncationMode(.tail)
         }
         .padding(.vertical, 4)
         .contextMenu {
@@ -219,6 +221,7 @@ private struct SearchResultRow: View {
                         Text(result.title)
                             .font(.system(size: 13, weight: .semibold))
                             .lineLimit(1)
+                            .truncationMode(.tail)
 
                         Spacer(minLength: 8)
 
@@ -231,12 +234,14 @@ private struct SearchResultRow: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .lineLimit(2)
+                        .truncationMode(.tail)
 
                     HStack(spacing: 6) {
                         Text(result.archiveTitle)
                             .font(.caption2)
                             .foregroundStyle(.tertiary)
                             .lineLimit(1)
+                            .truncationMode(.tail)
 
                         if let sentAt = result.sentAt {
                             Text("•")

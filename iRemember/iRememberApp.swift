@@ -33,18 +33,23 @@ struct IRememberApp: App {
         .defaultSize(width: 1380, height: 860)
         .windowResizability(.contentMinSize)
         .windowToolbarStyle(.unifiedCompact)
-        .defaultWindowPlacement { content, context in
+        .defaultWindowPlacement { _, context in
             let displayBounds = context.defaultDisplay.visibleRect
-            let size = fittedMainWindowSize(for: content.sizeThatFits(.unspecified), in: displayBounds)
+            let size = fittedMainWindowSize(
+                for: CGSize(width: 1380, height: 860),
+                in: displayBounds
+            )
             return WindowPlacement(size: size)
         }
-        .windowIdealPlacement { content, context in
+        .windowIdealPlacement { _, context in
             let displayBounds = context.defaultDisplay.visibleRect
-            let proposal = ProposedViewSize(
-                width: min(displayBounds.width * 0.94, 1480),
-                height: min(displayBounds.height * 0.92, 980)
+            let size = fittedMainWindowSize(
+                for: CGSize(
+                    width: min(displayBounds.width * 0.94, 1480),
+                    height: min(displayBounds.height * 0.92, 980)
+                ),
+                in: displayBounds
             )
-            let size = fittedMainWindowSize(for: content.sizeThatFits(proposal), in: displayBounds)
             return WindowPlacement(size: size)
         }
         .modelContainer(sharedModelContainer)
