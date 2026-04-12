@@ -30,7 +30,11 @@ struct SidebarView: View {
         .onChange(of: appModel.searchScope) { _, _ in
             appModel.persistSessionIfPossible()
         }
-        .navigationSplitViewColumnWidth(min: 220, ideal: 260, max: 300)
+        .navigationSplitViewColumnWidth(
+            min: AppChrome.sidebarMinWidth,
+            ideal: AppChrome.sidebarIdealWidth,
+            max: AppChrome.sidebarMaxWidth
+        )
     }
 
     @ViewBuilder

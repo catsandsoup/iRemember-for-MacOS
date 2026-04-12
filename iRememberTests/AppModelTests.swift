@@ -158,6 +158,19 @@ final class AppModelTests: XCTestCase {
         XCTAssertEqual(restoredModel.selectedMessageID, focusedMessageID)
     }
 
+    func testTranscriptDaySectionsTrackLoadedWindow() async throws {
+        let appModel = makeAppModel()
+
+        await appModel.loadSampleLibrary()
+
+        XCTAssertFalse(appModel.transcriptMessages.isEmpty)
+        XCTAssertFalse(appModel.daySections.isEmpty)
+        XCTAssertEqual(
+            appModel.daySections.reduce(into: 0) { $0 += $1.messages.count },
+            appModel.transcriptMessages.count
+        )
+    }
+
     private func makeAppModel(
         source: SampleMessagesSource = SampleMessagesSource(),
         container: ModelContainer? = nil

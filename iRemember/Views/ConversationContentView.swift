@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ConversationContentView: View {
     @Bindable var appModel: AppModel
+    @Binding var isTimelineVisible: Bool
 
     var body: some View {
         Group {
@@ -24,13 +25,39 @@ struct ConversationContentView: View {
     private var contentView: some View {
         switch appModel.contentMode {
         case .transcript:
-            HStack(spacing: 0) {
-                TranscriptView(appModel: appModel)
-                ConversationTimelineView(appModel: appModel)
-            }
+            TranscriptWorkspaceView(appModel: appModel, isTimelineVisible: $isTimelineVisible)
         case .media:
             MediaBrowserView(appModel: appModel)
         }
+    }
+}
+
+private struct TranscriptWorkspaceView: View {
+    @Bindable var appModel: AppModel
+    @Binding var isTimelineVisible: Bool
+
+    var body: some View {
+        Group {
+            if isTimelineVisible {
+                HSplitView {
+                    TranscriptView(appModel: appModel)
+                        .frame(minWidth: AppChrome.transcriptMinWidth, maxWidth: .infinity, maxHeight: .infinity)
+
+                    ConversationTimelineView(appModel: appModel)
+                        .frame(
+                            minWidth: AppChrome.timelineMinWidth,
+                            idealWidth: AppChrome.timelineIdealWidth,
+                            maxWidth: AppChrome.timelineMaxWidth,
+                            maxHeight: .infinity,
+                            alignment: .topTrailing
+                        )
+                }
+            } else {
+                TranscriptView(appModel: appModel)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .animation(.snappy(duration: 0.22), value: isTimelineVisible)
     }
 }
 

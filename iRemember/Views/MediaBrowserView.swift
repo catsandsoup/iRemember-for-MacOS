@@ -10,21 +10,20 @@ struct MediaBrowserView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            HStack(alignment: .center) {
-                Picker("Media Filter", selection: $appModel.mediaFilter) {
-                    ForEach(MediaFilter.allCases) { filter in
-                        Text(filter.label).tag(filter)
-                    }
+            ViewThatFits(in: .horizontal) {
+                HStack(alignment: .center, spacing: 16) {
+                    mediaFilterPicker
+
+                    Spacer(minLength: 0)
+
+                    itemCountLabel
                 }
-                .pickerStyle(.segmented)
-                .frame(width: 284)
 
-                Spacer()
-
-                Text("\(appModel.filteredMediaAssets.count.groupedCount) items")
-                    .font(.subheadline)
-                    .monospacedDigit()
-                    .foregroundStyle(.secondary)
+                VStack(alignment: .leading, spacing: 12) {
+                    mediaFilterPicker
+                    itemCountLabel
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
             .padding(.horizontal, 24)
             .padding(.vertical, 16)
@@ -69,6 +68,23 @@ struct MediaBrowserView: View {
             }
             .animation(.smooth(duration: 0.2), value: appModel.mediaFilter)
         }
+    }
+
+    private var mediaFilterPicker: some View {
+        Picker("Media Filter", selection: $appModel.mediaFilter) {
+            ForEach(MediaFilter.allCases) { filter in
+                Text(filter.label).tag(filter)
+            }
+        }
+        .pickerStyle(.segmented)
+        .frame(maxWidth: 320, alignment: .leading)
+    }
+
+    private var itemCountLabel: some View {
+        Text("\(appModel.filteredMediaAssets.count.groupedCount) items")
+            .font(.subheadline)
+            .monospacedDigit()
+            .foregroundStyle(.secondary)
     }
 }
 

@@ -16,6 +16,15 @@ enum AppChrome {
     static let cardRadius: CGFloat = 18
     static let rowRadius: CGFloat = 14
     static let bubbleWidth: CGFloat = 470
+    static let workspaceMinWidth: CGFloat = 1000
+    static let workspaceMinHeight: CGFloat = 680
+    static let sidebarMinWidth: CGFloat = 240
+    static let sidebarIdealWidth: CGFloat = 280
+    static let sidebarMaxWidth: CGFloat = 340
+    static let transcriptMinWidth: CGFloat = 420
+    static let timelineMinWidth: CGFloat = 168
+    static let timelineIdealWidth: CGFloat = 196
+    static let timelineMaxWidth: CGFloat = 260
 }
 
 enum AppTheme {

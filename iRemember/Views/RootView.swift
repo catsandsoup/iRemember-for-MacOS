@@ -4,6 +4,7 @@ import SwiftData
 struct RootView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var splitViewVisibility: NavigationSplitViewVisibility = .all
+    @SceneStorage("workspace.timelineVisibility") private var isTimelineVisible = true
     @Bindable var appModel: AppModel
 
     var body: some View {
@@ -13,6 +14,8 @@ struct RootView: View {
             await appModel.bootstrapIfNeeded()
         }
         .task(id: "\(appModel.searchText)|\(appModel.searchScope.rawValue)|\(appModel.sidebarMode.rawValue)") {
+            try? await Task.sleep(for: .milliseconds(180))
+            guard !Task.isCancelled else { return }
             await appModel.refreshSearchResults()
         }
         .sheet(isPresented: $appModel.isDateJumpPresented) {
@@ -57,29 +60,35 @@ struct RootView: View {
     }
 
     private var starterShell: some View {
-        ConversationContentView(appModel: appModel)
+        ConversationContentView(appModel: appModel, isTimelineVisible: $isTimelineVisible)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private func workspaceShell(isLibraryLoaded: Bool) -> some View {
         NavigationSplitView(columnVisibility: $splitViewVisibility) {
             SidebarView(appModel: appModel)
+                .modifier(SidebarSearchModifier(enabled: isLibraryLoaded, appModel: appModel))
                 .accessibilityIdentifier("sidebar-pane")
         } detail: {
-            ConversationContentView(appModel: appModel)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .accessibilityIdentifier("content-pane")
+            workspaceDetail(isLibraryLoaded: isLibraryLoaded)
         }
         .navigationSplitViewStyle(.balanced)
-        .modifier(WorkspaceSearchModifier(enabled: isLibraryLoaded, appModel: appModel))
-        .modifier(WorkspaceInspectorModifier(enabled: isLibraryLoaded, appModel: appModel))
         .toolbar {
             if isLibraryLoaded {
-                ReadyToolbar(appModel: appModel)
+                ReadyToolbar(appModel: appModel, isTimelineVisible: $isTimelineVisible)
             }
         }
         .toolbar(removing: .title)
+        .focusedSceneValue(\.workspaceTimelineVisibility, $isTimelineVisible)
+        .focusedSceneValue(\.workspaceContentMode, appModel.contentMode)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private func workspaceDetail(isLibraryLoaded: Bool) -> some View {
+        ConversationContentView(appModel: appModel, isTimelineVisible: $isTimelineVisible)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .modifier(WorkspaceInspectorModifier(enabled: isLibraryLoaded, appModel: appModel))
+            .accessibilityIdentifier("content-pane")
     }
 
     private var mediaViewerPresented: Binding<Bool> {
@@ -96,7 +105,7 @@ struct RootView: View {
     }
 }
 
-private struct WorkspaceSearchModifier: ViewModifier {
+private struct SidebarSearchModifier: ViewModifier {
     let enabled: Bool
     @Bindable var appModel: AppModel
 
@@ -104,7 +113,7 @@ private struct WorkspaceSearchModifier: ViewModifier {
         if enabled {
             content.searchable(
                 text: $appModel.searchText,
-                placement: .toolbar,
+                placement: .sidebar,
                 prompt: "Search messages, contacts, and files"
             )
         } else {
@@ -124,7 +133,7 @@ private struct WorkspaceInspectorModifier: ViewModifier {
                     InspectorView(appModel: appModel)
                         .accessibilityIdentifier("inspector-pane")
                 }
-                .inspectorColumnWidth(min: 280, ideal: 320, max: 360)
+                .inspectorColumnWidth(min: 260, ideal: 300, max: 340)
         } else {
             content
         }
@@ -133,6 +142,7 @@ private struct WorkspaceInspectorModifier: ViewModifier {
 
 private struct ReadyToolbar: ToolbarContent {
     @Bindable var appModel: AppModel
+    @Binding var isTimelineVisible: Bool
 
     var body: some ToolbarContent {
         ToolbarItem(placement: .principal) {
@@ -162,6 +172,15 @@ private struct ReadyToolbar: ToolbarContent {
         }
 
         ToolbarItemGroup {
+            if appModel.selectedArchiveSummary != nil, appModel.contentMode == .transcript {
+                Button(isTimelineVisible ? "Hide Timeline" : "Show Timeline", systemImage: "clock") {
+                    isTimelineVisible.toggle()
+                }
+                .labelStyle(.iconOnly)
+                .help(isTimelineVisible ? "Hide the timeline panel" : "Show the timeline panel")
+                .accessibilityLabel(isTimelineVisible ? "Hide timeline" : "Show timeline")
+            }
+
             ExportToolbarMenu(appModel: appModel)
 
             Button(appModel.isInspectorVisible ? "Hide Details" : "Show Details", systemImage: "info.circle") {
@@ -179,17 +198,31 @@ private struct ArchiveToolbarTitleView: View {
 
     var body: some View {
         if let archive = appModel.selectedArchiveSummary {
-            VStack(spacing: 2) {
-                Text(archive.title)
-                    .font(.headline)
-                    .lineLimit(1)
+            ViewThatFits {
+                HStack(spacing: 8) {
+                    Text(archive.title)
+                        .font(.headline)
+                        .lineLimit(1)
 
-                Text(appModel.currentArchiveSubtitle)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
+                    Text(appModel.currentArchiveSubtitle)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+
+                VStack(spacing: 1) {
+                    Text(archive.title)
+                        .font(.headline)
+                        .lineLimit(1)
+
+                    Text(appModel.currentArchiveSubtitle)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
             }
-            .frame(maxWidth: 280)
+            .frame(maxWidth: 240, alignment: .leading)
+            .accessibilityElement(children: .combine)
         } else {
             Text("Conversations")
                 .font(.headline)

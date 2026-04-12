@@ -75,7 +75,7 @@ struct InspectorView: View {
                 .padding(20)
             }
         }
-        .frame(minWidth: 280, idealWidth: 320, maxWidth: 360, maxHeight: .infinity, alignment: .topLeading)
+        .frame(minWidth: 260, idealWidth: 300, maxWidth: 340, maxHeight: .infinity, alignment: .topLeading)
         .controlSize(.small)
     }
 
@@ -128,7 +128,7 @@ private struct InspectorIdentityHeader: View {
                         .lineLimit(2)
 
                     Text(handleSummary)
-                        .lineLimit(1)
+                        .lineLimit(2)
                 }
                 .font(.caption)
                 .foregroundStyle(.secondary)

@@ -25,13 +25,14 @@ struct IRememberApp: App {
     var body: some Scene {
         WindowGroup("iRemember for Messages") {
             RootView(appModel: appModel)
-                .frame(minWidth: 1320, minHeight: 760)
+                .frame(minWidth: AppChrome.workspaceMinWidth, minHeight: AppChrome.workspaceMinHeight)
                 .task {
                     await SnapshotExportController.exportIfRequested(appModel: appModel)
                 }
         }
-        .defaultSize(width: 1320, height: 860)
-        .windowToolbarStyle(.unified)
+        .defaultSize(width: 1380, height: 860)
+        .windowResizability(.contentMinSize)
+        .windowToolbarStyle(.unifiedCompact)
         .defaultWindowPlacement { content, context in
             let displayBounds = context.defaultDisplay.visibleRect
             let size = fittedMainWindowSize(for: content.sizeThatFits(.unspecified), in: displayBounds)
@@ -56,16 +57,9 @@ struct IRememberApp: App {
         .commands {
             SidebarCommands()
             InspectorCommands()
+            WorkspaceTimelineCommands()
 
-            CommandMenu("View") {
-                Button(appModel.isInspectorVisible ? "Hide Inspector" : "Show Inspector") {
-                    appModel.toggleInspectorVisibility()
-                }
-                .keyboardShortcut("i", modifiers: [.command, .option])
-                .disabled(appModel.accessState != .ready)
-
-                Divider()
-
+            CommandGroup(after: .sidebar) {
                 Button("Browse by Conversation") {
                     Task { await appModel.setSidebarMode(.threads) }
                 }
@@ -79,7 +73,7 @@ struct IRememberApp: App {
                 .disabled(appModel.accessState != .ready)
             }
 
-            CommandMenu("File") {
+            CommandGroup(after: .importExport) {
                 Button("Export Conversation…") {
                     appModel.presentExport(scope: .entireConversation)
                 }
@@ -93,7 +87,7 @@ struct IRememberApp: App {
                 .disabled(appModel.selectedArchiveSummary == nil)
             }
 
-            CommandMenu("iRemember") {
+            CommandMenu("Archive") {
                 Button("Export PDF Archive…") {
                     appModel.presentExport(scope: .entireConversation, format: .pdf)
                 }
@@ -156,7 +150,7 @@ struct IRememberApp: App {
 
 private func fittedMainWindowSize(for proposedSize: CGSize, in displayBounds: CGRect) -> CGSize {
     CGSize(
-        width: min(max(proposedSize.width, 1320), min(displayBounds.width * 0.94, 1480)),
-        height: min(max(proposedSize.height, 760), min(displayBounds.height * 0.92, 980))
+        width: min(max(proposedSize.width, AppChrome.workspaceMinWidth), min(displayBounds.width * 0.95, 1560)),
+        height: min(max(proposedSize.height, AppChrome.workspaceMinHeight), min(displayBounds.height * 0.92, 980))
     )
 }

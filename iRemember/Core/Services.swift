@@ -265,9 +265,7 @@ public struct TimelineMonthMarker: Identifiable, Hashable, Sendable {
     }
 
     public var shortLabel: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMM"
-        return formatter.string(from: startDate)
+        startDate.formatted(.dateTime.month(.abbreviated))
     }
 }
 
@@ -312,6 +310,7 @@ public final class AppModel {
     public private(set) var conversations: [Conversation] = []
     public private(set) var detailCache: [UUID: ConversationDetail] = [:]
     public private(set) var transcriptMessages: [Message] = []
+    public private(set) var daySections: [DaySection] = []
     public private(set) var failureTitle = "Unable to Load Library"
     public private(set) var failureCode = "IRM-APP-000"
     public private(set) var failureDescription = "The library could not be opened."
@@ -382,6 +381,12 @@ public final class AppModel {
 
     private let transcriptWindowSize = 160
     private let calendar = Calendar.autoupdatingCurrent
+    @ObservationIgnored
+    private let daySectionFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .full
+        return formatter
+    }()
 
     private let primarySource: any MessagesSource
     private let sampleFallback: (any MessagesSource)?
@@ -395,6 +400,8 @@ public final class AppModel {
     private var pendingRestoredSession: RestoredAppSession?
     private var persistenceCoordinator: AppPersistenceCoordinator?
     private var didConfigurePersistence = false
+    @ObservationIgnored
+    private var transcriptMessagesByID: [UUID: Message] = [:]
 
     public convenience init(source: any MessagesSource, sampleFallback: (any MessagesSource)? = nil) {
         self.init(
@@ -541,23 +548,6 @@ public final class AppModel {
     public var canLoadLaterMessages: Bool {
         guard let detail = selectedArchiveDetail else { return false }
         return transcriptWindow.upperBound < detail.messageIndex.count
-    }
-
-    public var daySections: [DaySection] {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .full
-
-        let grouped = Dictionary(grouping: visibleMessages) { message in
-            calendar.startOfDay(for: message.sentAt)
-        }
-
-        return grouped.keys.sorted().map { day in
-            DaySection(
-                id: day,
-                title: formatter.string(from: day),
-                messages: grouped[day, default: []].sorted { $0.sentAt < $1.sentAt }
-            )
-        }
     }
 
     public var filteredMediaAssets: [MediaAsset] {
@@ -773,18 +763,13 @@ public final class AppModel {
     }
 
     public var timelineSummaryTitle: String {
-        let formatter = DateFormatter()
-
         switch timelineRange {
         case .week:
-            formatter.dateFormat = "MMMM yyyy"
-            return formatter.string(from: timelineAnchorDate)
+            return timelineAnchorDate.formatted(.dateTime.month(.wide).year())
         case .month:
-            formatter.dateFormat = "MMMM yyyy"
-            return formatter.string(from: timelineAnchorDate)
+            return timelineAnchorDate.formatted(.dateTime.month(.wide).year())
         case .year:
-            formatter.dateFormat = "yyyy"
-            return formatter.string(from: timelineAnchorDate)
+            return timelineAnchorDate.formatted(.dateTime.year())
         }
     }
 
@@ -798,10 +783,9 @@ public final class AppModel {
             return "No messages loaded"
         }
 
-        let formatter = DateIntervalFormatter()
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .none
-        let rangeText = formatter.string(from: first, to: last)
+        let rangeText = first == last
+            ? first.compactDateLabel
+            : "\(first.compactDateLabel) to \(last.compactDateLabel)"
 
         guard let detail = selectedArchiveDetail else { return rangeText }
         let lower = transcriptWindow.lowerBound + 1
@@ -914,15 +898,13 @@ public final class AppModel {
 
     public func ensureTranscriptWindow() async {
         guard let detail = selectedArchiveDetail else {
-            transcriptWindow = 0..<0
-            transcriptMessages = []
+            applyTranscriptWindow([], range: 0..<0)
             return
         }
 
         let count = detail.messageIndex.count
         guard count > 0 else {
-            transcriptWindow = 0..<0
-            transcriptMessages = []
+            applyTranscriptWindow([], range: 0..<0)
             return
         }
 
@@ -1044,8 +1026,7 @@ public final class AppModel {
         selectedMediaAssetID = nil
         isMediaViewerPresented = false
         highlightedMessageID = nil
-        transcriptWindow = 0..<0
-        transcriptMessages = []
+        applyTranscriptWindow([], range: 0..<0)
         AppTelemetry.archive.info("Selected thread archive")
         await loadSelectedConversationIfNeeded()
     }
@@ -1071,8 +1052,7 @@ public final class AppModel {
         selectedMediaAssetID = nil
         isMediaViewerPresented = false
         highlightedMessageID = nil
-        transcriptWindow = 0..<0
-        transcriptMessages = []
+        applyTranscriptWindow([], range: 0..<0)
         AppTelemetry.archive.info("Selected merged archive")
         await loadSelectedConversationIfNeeded()
     }
@@ -1155,6 +1135,21 @@ public final class AppModel {
     public func jumpToTimelineMonth(_ marker: TimelineMonthMarker) async {
         await jumpToDay(marker.startDate)
         expandedTimelineYear = marker.year
+    }
+
+    public func updateTimelineAnchorForVisibleMessage(_ messageID: UUID?) {
+        guard let messageID,
+              let message = transcriptMessagesByID[messageID] else {
+            return
+        }
+
+        guard !calendar.isDate(message.sentAt, inSameDayAs: timelineAnchorDate) else {
+            return
+        }
+
+        timelineAnchorDate = message.sentAt
+        dateJumpTarget = message.sentAt
+        expandedTimelineYear = calendar.component(.year, from: message.sentAt)
     }
 
     public func jumpToReplyContext(from message: Message) async {
@@ -1282,8 +1277,7 @@ public final class AppModel {
         clearJumpOrigin()
         detailCache = [:]
         timelineNavigationSnapshots = [:]
-        transcriptMessages = []
-        transcriptWindow = 0..<0
+        applyTranscriptWindow([], range: 0..<0)
 
         do {
             let snapshot = try await source.bootstrapLibrary(progressHandler: { progress in
@@ -1347,8 +1341,7 @@ public final class AppModel {
         guard let detail = selectedArchiveDetail else { return }
         let count = detail.messageIndex.count
         guard count > 0 else {
-            transcriptWindow = 0..<0
-            transcriptMessages = []
+            applyTranscriptWindow([], range: 0..<0)
             return
         }
 
@@ -1358,8 +1351,7 @@ public final class AppModel {
         do {
             if detail.summary.kind == .thread, let conversationID = selectedConversationID {
                 let slice = try await source.loadMessages(conversationID: conversationID, range: lower..<upper)
-                transcriptWindow = slice.range
-                transcriptMessages = slice.messages
+                applyTranscriptWindow(slice.messages, range: slice.range)
             } else {
                 let sliceEntries = Array(detail.messageIndex[lower..<upper])
                 let orderedIDs = sliceEntries.map(\.id)
@@ -1375,10 +1367,12 @@ public final class AppModel {
                 }
 
                 let ordering = Dictionary(uniqueKeysWithValues: orderedIDs.enumerated().map { ($1, $0) })
-                transcriptWindow = lower..<upper
-                transcriptMessages = mergedMessages.sorted {
+                applyTranscriptWindow(
+                    mergedMessages.sorted {
                     (ordering[$0.id] ?? 0) < (ordering[$1.id] ?? 0)
-                }
+                    },
+                    range: lower..<upper
+                )
             }
         } catch {
             await applyLoadFailure(error)
@@ -1388,8 +1382,7 @@ public final class AppModel {
     private func restoreOrLoadTranscriptWindow(for detail: ArchiveDetail) async {
         let count = detail.messageIndex.count
         guard count > 0 else {
-            transcriptWindow = 0..<0
-            transcriptMessages = []
+            applyTranscriptWindow([], range: 0..<0)
             activeTranscriptAnchor = .latest
             return
         }
@@ -1408,6 +1401,29 @@ public final class AppModel {
         selectedMessageID = nil
         highlightedMessageID = nil
         await loadTranscriptWindow(range: lower..<count)
+    }
+
+    private func applyTranscriptWindow(_ messages: [Message], range: Range<Int>) {
+        transcriptWindow = range
+        transcriptMessages = messages
+        transcriptMessagesByID = Dictionary(uniqueKeysWithValues: messages.map { ($0.id, $0) })
+        daySections = makeDaySections(from: messages)
+    }
+
+    private func makeDaySections(from messages: [Message]) -> [DaySection] {
+        guard !messages.isEmpty else { return [] }
+
+        let grouped = Dictionary(grouping: messages) { message in
+            calendar.startOfDay(for: message.sentAt)
+        }
+
+        return grouped.keys.sorted().map { day in
+            DaySection(
+                id: day,
+                title: daySectionFormatter.string(from: day),
+                messages: grouped[day, default: []].sorted { $0.sentAt < $1.sentAt }
+            )
+        }
     }
 
     private func persistCurrentArchiveState() {
@@ -1883,6 +1899,8 @@ public final class AppModel {
 
     public func refreshSearchResults() async {
         let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        let requestedScope = searchScope
+
         guard !query.isEmpty else {
             searchResults = []
             isSearching = false
@@ -1911,12 +1929,22 @@ public final class AppModel {
             }
 
         do {
-            let contentResults = try await source.searchLibrary(query: query, scope: searchScope, limit: 28)
+            let contentResults = try await source.searchLibrary(query: query, scope: requestedScope, limit: 28)
+            guard !Task.isCancelled else { return }
+            guard searchText.trimmingCharacters(in: .whitespacesAndNewlines) == query,
+                  searchScope == requestedScope else {
+                return
+            }
             let normalizedResults = (archiveResults + contentResults).map(normalizedSearchResult(_:))
             searchResults = deduplicatedSearchResults(normalizedResults).sorted(by: searchResultOrder(_:_:))
             isSearching = false
-            AppTelemetry.search.info("Updated search results for scope \(self.searchScope.rawValue, privacy: .public)")
+            AppTelemetry.search.info("Updated search results for scope \(requestedScope.rawValue, privacy: .public)")
         } catch {
+            guard !Task.isCancelled else { return }
+            guard searchText.trimmingCharacters(in: .whitespacesAndNewlines) == query,
+                  searchScope == requestedScope else {
+                return
+            }
             searchResults = deduplicatedSearchResults(archiveResults.map(normalizedSearchResult(_:)))
             isSearching = false
             AppTelemetry.search.error("Search failed: \(error.localizedDescription, privacy: .public)")

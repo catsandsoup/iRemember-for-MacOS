@@ -3,9 +3,24 @@ import SwiftUI
 
 struct TranscriptView: View {
     @Bindable var appModel: AppModel
+    @State private var visibleMessageID: UUID?
 
     private var showsParticipantNames: Bool {
         (appModel.selectedArchiveSummary?.participants.count ?? 0) > 2
+    }
+
+    private var mediaAssetLookup: [MessageAttachmentLookupKey: MediaAsset] {
+        Dictionary(
+            uniqueKeysWithValues: (appModel.selectedArchiveDetail?.mediaAssets ?? []).map { asset in
+                (
+                    MessageAttachmentLookupKey(
+                        messageID: asset.messageID,
+                        attachmentID: asset.attachment.id
+                    ),
+                    asset
+                )
+            }
+        )
     }
 
     var body: some View {
@@ -31,7 +46,7 @@ struct TranscriptView: View {
                                             isSelected: appModel.selectedMessageID == message.id,
                                             isHighlighted: appModel.highlightedMessageID == message.id,
                                             showsParticipantName: showsParticipantNames,
-                                            availableMediaAssets: appModel.selectedArchiveDetail?.mediaAssets ?? [],
+                                            mediaAssetLookup: mediaAssetLookup,
                                             onSelectMedia: { asset in
                                                 appModel.presentMediaViewer(for: asset)
                                             },
@@ -40,8 +55,13 @@ struct TranscriptView: View {
                                             }
                                         )
                                         .id(message.id)
-                                        .contentShape(Rectangle())
+                                        .contentShape(.rect)
                                         .onTapGesture {
+                                            appModel.selectMessage(message)
+                                        }
+                                        .accessibilityAddTraits(message.id == appModel.selectedMessageID ? [.isSelected] : [])
+                                        .accessibilityHint("Select to show this message in the inspector.")
+                                        .accessibilityAction(named: "Select Message") {
                                             appModel.selectMessage(message)
                                         }
                                     }
@@ -51,7 +71,9 @@ struct TranscriptView: View {
                             }
                         }
                     }
-                    .frame(maxWidth: 920)
+                    .scrollTargetLayout()
+                    .textSelection(.enabled)
+                    .frame(maxWidth: 860)
                     .padding(.horizontal, AppChrome.panePadding)
                     .padding(.bottom, AppChrome.panePadding)
 
@@ -63,12 +85,21 @@ struct TranscriptView: View {
                     }
                 }
             }
+            .scrollPosition(id: $visibleMessageID, anchor: .center)
             .onChange(of: appModel.scrollTargetMessageID) { _, newValue in
                 guard let newValue else { return }
                 proxy.scrollTo(newValue, anchor: .center)
             }
+            .onChange(of: visibleMessageID) { _, newValue in
+                appModel.updateTimelineAnchorForVisibleMessage(newValue)
+            }
         }
     }
+}
+
+private struct MessageAttachmentLookupKey: Hashable {
+    let messageID: UUID
+    let attachmentID: UUID
 }
 
 private struct TranscriptSectionHeader: View {
@@ -104,7 +135,7 @@ private struct MessageRow: View {
     let isSelected: Bool
     let isHighlighted: Bool
     let showsParticipantName: Bool
-    let availableMediaAssets: [MediaAsset]
+    let mediaAssetLookup: [MessageAttachmentLookupKey: MediaAsset]
     let onSelectMedia: (MediaAsset) -> Void
     let onJumpToReply: () -> Void
 
@@ -152,7 +183,7 @@ private struct MessageRow: View {
     var body: some View {
         HStack(alignment: .bottom) {
             if isOutgoing {
-                Spacer(minLength: 110)
+                Spacer(minLength: 72)
             }
 
             VStack(alignment: alignment, spacing: 4) {
@@ -178,10 +209,10 @@ private struct MessageRow: View {
                     footer
                 }
             }
-            .frame(maxWidth: 620, alignment: isOutgoing ? .trailing : .leading)
+            .frame(maxWidth: 580, alignment: isOutgoing ? .trailing : .leading)
 
             if !isOutgoing {
-                Spacer(minLength: 110)
+                Spacer(minLength: 72)
             }
         }
         .padding(.vertical, verticalSpacing)
@@ -213,7 +244,6 @@ private struct MessageRow: View {
                 Text(visibleBodyText)
                     .font(.system(size: 17))
                     .foregroundStyle(isOutgoing ? AppTheme.outgoingPrimaryText : Color.primary)
-                    .textSelection(.enabled)
                     .lineSpacing(3)
             }
 
@@ -313,9 +343,7 @@ private struct MessageRow: View {
     }
 
     private func matchingMediaAsset(for attachment: Attachment) -> MediaAsset? {
-        availableMediaAssets.first {
-            $0.messageID == message.id && $0.attachment.id == attachment.id
-        }
+        mediaAssetLookup[MessageAttachmentLookupKey(messageID: message.id, attachmentID: attachment.id)]
     }
 }
 

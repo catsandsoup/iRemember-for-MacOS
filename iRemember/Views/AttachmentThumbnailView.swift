@@ -1,4 +1,5 @@
 import AppKit
+import ImageIO
 import QuickLookThumbnailing
 import SwiftUI
 
@@ -13,66 +14,69 @@ struct AttachmentThumbnailView: View {
 
     @State private var previewImage: NSImage?
 
+    private static let thumbnailCache: NSCache<NSString, NSImage> = {
+        let cache = NSCache<NSString, NSImage>()
+        cache.countLimit = 256
+        return cache
+    }()
+
     init(asset: MediaAsset, displayMode: DisplayMode = .fill) {
         self.asset = asset
         self.displayMode = displayMode
     }
 
     var body: some View {
-        GeometryReader { proxy in
-            ZStack {
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .fill(backgroundFill)
+        ZStack {
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(backgroundFill)
 
-                if let previewImage {
-                    Image(nsImage: previewImage)
-                        .resizable()
-                        .aspectRatio(contentMode: displayMode == .fill ? .fill : .fit)
-                        .frame(width: proxy.size.width, height: proxy.size.height)
-                        .clipped()
-                } else {
-                    VStack(spacing: 8) {
-                        Image(systemName: asset.attachment.kind.symbolName)
-                            .font(.system(size: 28, weight: .medium))
-                            .foregroundStyle(.secondary)
-
-                        Text(placeholderLabel)
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(.secondary)
-                    }
-                    .padding(12)
+            if let previewImage {
+                Image(nsImage: previewImage)
+                    .resizable()
+                    .aspectRatio(contentMode: displayMode == .fill ? .fill : .fit)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                }
+                    .clipped()
+            } else {
+                VStack(spacing: 8) {
+                    Image(systemName: asset.attachment.kind.symbolName)
+                        .font(.system(size: 28, weight: .medium))
+                        .foregroundStyle(.secondary)
 
-                if asset.attachment.kind == .video {
-                    Image(systemName: "play.fill")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(.white)
-                        .padding(12)
-                        .background(AppTheme.videoPlayOverlay, in: Circle())
-                }
-
-                if !asset.attachment.isAvailableLocally {
-                    VStack {
-                        Spacer()
-
-                        HStack(spacing: 6) {
-                            Image(systemName: "icloud.slash")
-                            Text("Not on this Mac")
-                        }
+                    Text(placeholderLabel)
                         .font(.caption.weight(.semibold))
-                        .foregroundStyle(AppTheme.metadataText)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 8)
-                        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-                        .padding(12)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(12)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+
+            if asset.attachment.kind == .video {
+                Image(systemName: "play.fill")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .padding(12)
+                    .background(AppTheme.videoPlayOverlay, in: Circle())
+            }
+
+            if !asset.attachment.isAvailableLocally {
+                VStack {
+                    Spacer()
+
+                    HStack(spacing: 6) {
+                        Image(systemName: "icloud.slash")
+                        Text("Not on this Mac")
                     }
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(AppTheme.metadataText)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 8)
+                    .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .padding(12)
                 }
             }
-            .frame(width: proxy.size.width, height: proxy.size.height)
-            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
         }
-        .task(id: asset.attachment.id) {
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .task(id: "\(asset.attachment.id.uuidString)-\(displayMode)") {
             await loadPreview()
         }
     }
@@ -84,9 +88,15 @@ struct AttachmentThumbnailView: View {
             return
         }
 
+        let cacheKey = thumbnailCacheKey(fileURL: fileURL)
+        if let cachedImage = Self.thumbnailCache.object(forKey: cacheKey as NSString) {
+            previewImage = cachedImage
+            return
+        }
+
         let request = QLThumbnailGenerator.Request(
             fileAt: fileURL,
-            size: CGSize(width: 520, height: 360),
+            size: thumbnailRequestSize,
             scale: NSScreen.main?.backingScaleFactor ?? 2,
             representationTypes: .thumbnail
         )
@@ -94,8 +104,13 @@ struct AttachmentThumbnailView: View {
         do {
             let representation = try await QLThumbnailGenerator.shared.generateBestRepresentation(for: request)
             previewImage = representation.nsImage
+            Self.thumbnailCache.setObject(representation.nsImage, forKey: cacheKey as NSString)
         } catch {
-            previewImage = NSImage(contentsOf: fileURL)
+            let fallbackImage = downsampledImage(at: fileURL, targetSize: thumbnailRequestSize)
+            previewImage = fallbackImage
+            if let fallbackImage {
+                Self.thumbnailCache.setObject(fallbackImage, forKey: cacheKey as NSString)
+            }
         }
     }
 
@@ -118,5 +133,40 @@ struct AttachmentThumbnailView: View {
         case .link:
             return AppTheme.linkAttachmentFill
         }
+    }
+
+    private var thumbnailRequestSize: CGSize {
+        switch displayMode {
+        case .fill:
+            return CGSize(width: 640, height: 480)
+        case .fit:
+            return CGSize(width: 540, height: 540)
+        }
+    }
+
+    private func thumbnailCacheKey(fileURL: URL) -> String {
+        let scale = NSScreen.main?.backingScaleFactor ?? 2
+        return "\(asset.attachment.id.uuidString)-\(Int(thumbnailRequestSize.width))x\(Int(thumbnailRequestSize.height))@\(Int(scale * 100))-\(fileURL.path)"
+    }
+
+    private func downsampledImage(at fileURL: URL, targetSize: CGSize) -> NSImage? {
+        guard let source = CGImageSourceCreateWithURL(fileURL as CFURL, [kCGImageSourceShouldCache: false] as CFDictionary) else {
+            return nil
+        }
+
+        let scale = NSScreen.main?.backingScaleFactor ?? 2
+        let maxPixel = max(targetSize.width, targetSize.height) * scale
+        let options: [CFString: Any] = [
+            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            kCGImageSourceCreateThumbnailWithTransform: true,
+            kCGImageSourceThumbnailMaxPixelSize: maxPixel,
+            kCGImageSourceShouldCacheImmediately: true
+        ]
+
+        guard let image = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary) else {
+            return nil
+        }
+
+        return NSImage(cgImage: image, size: targetSize)
     }
 }

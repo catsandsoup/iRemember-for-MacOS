@@ -3,155 +3,153 @@ import SwiftUI
 struct ConversationTimelineView: View {
     @Bindable var appModel: AppModel
 
+    private var displayedDate: Date {
+        appModel.pendingTimelineDate ?? appModel.timelineAnchorDate
+    }
+
+    private var focusedMarkerID: String {
+        let calendar = Calendar.autoupdatingCurrent
+        let year = calendar.component(.year, from: displayedDate)
+        let month = calendar.component(.month, from: displayedDate)
+        return "month-\(year)-\(month)"
+    }
+
     var body: some View {
-        let timelineYears = appModel.timelineYears
-        let displayedDate = appModel.pendingTimelineDate ?? appModel.timelineAnchorDate
-        let focusedYear = Calendar.autoupdatingCurrent.component(.year, from: displayedDate)
-
         VStack(spacing: 0) {
-            VStack(alignment: .trailing, spacing: AppChrome.spacing12) {
-                if appModel.canReturnToPreviousPosition {
-                    timelineToolbar
+            TimelineHeader(
+                date: displayedDate,
+                showsReturnButton: appModel.canReturnToPreviousPosition,
+                returnLabel: appModel.jumpOriginDescription ?? "Back to previous position",
+                onReturn: {
+                    Task { await appModel.returnToPreviousPosition() }
                 }
+            )
 
-                if timelineYears.isEmpty {
-                    TimelineEmptyStateView()
-                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
-                } else {
+            Divider()
+
+            if appModel.timelineYears.isEmpty {
+                TimelineEmptyStateView()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 20)
+            } else {
+                ScrollViewReader { proxy in
                     ScrollView {
-                        LazyVStack(alignment: .trailing, spacing: 10) {
-                            ForEach(timelineYears, id: \.self) { year in
-                                TimelineYearGroup(
+                        LazyVStack(alignment: .leading, spacing: 18) {
+                            ForEach(appModel.timelineYears, id: \.self) { year in
+                                TimelineYearSection(
                                     year: year,
                                     months: appModel.timelineMonths(for: year),
                                     focusedDate: displayedDate,
-                                    isFocused: year == focusedYear,
-                                    showsMonths: year == focusedYear,
                                     onSelectYear: {
                                         Task { await appModel.jumpToTimelineYear(year) }
                                     },
-                                    onPreviewYear: { previewDate in
-                                        appModel.previewTimelineJump(to: previewDate)
-                                    },
-                                    onCommitPreview: {
-                                        Task { await appModel.commitTimelineJump() }
-                                    },
                                     onSelectMonth: { marker in
                                         Task { await appModel.jumpToTimelineMonth(marker) }
-                                    },
-                                    onPreviewMonth: { marker in
-                                        appModel.previewTimelineJump(to: marker.startDate)
-                                    },
-                                    onCommitMonthPreview: {
-                                        Task { await appModel.commitTimelineJump() }
                                     }
                                 )
+                                .id("year-\(year)")
                             }
                         }
-                        .frame(maxWidth: .infinity, alignment: .trailing)
-                        .padding(.vertical, 6)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 14)
                     }
-                    .scrollIndicators(.hidden)
+                    .scrollIndicators(.visible)
+                    .onAppear {
+                        proxy.scrollTo(focusedMarkerID, anchor: .center)
+                    }
+                    .onChange(of: focusedMarkerID, initial: true) { _, newValue in
+                        withAnimation(.smooth(duration: 0.22)) {
+                            proxy.scrollTo(newValue, anchor: .center)
+                        }
+                    }
                 }
-
-                TimelineFocusBadge(date: displayedDate, isPending: appModel.pendingTimelineDate != nil)
             }
-            .padding(.horizontal, 10)
-            .padding(.vertical, AppChrome.spacing16)
-            .frame(width: 82)
-            .frame(maxHeight: .infinity, alignment: .topTrailing)
         }
-        .overlay(alignment: .leading) {
-            Divider()
-        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .accessibilityIdentifier("timeline-rail")
-    }
-
-    private var timelineToolbar: some View {
-        Button(appModel.jumpOriginDescription ?? "Back to previous position", systemImage: "arrow.uturn.backward") {
-            Task { await appModel.returnToPreviousPosition() }
-        }
-        .labelStyle(.iconOnly)
-        .buttonStyle(.bordered)
-        .help(appModel.jumpOriginDescription ?? "Back to previous position")
-        .accessibilityLabel(appModel.jumpOriginDescription ?? "Back to previous position")
-        .controlSize(.small)
     }
 }
 
-private struct TimelineYearGroup: View {
+private struct TimelineHeader: View {
+    let date: Date
+    let showsReturnButton: Bool
+    let returnLabel: String
+    let onReturn: () -> Void
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(date, format: .dateTime.month(.wide))
+                    .font(.headline)
+                    .lineLimit(1)
+
+                Text(date, format: .dateTime.year())
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .monospacedDigit()
+            }
+
+            Spacer(minLength: 0)
+
+            if showsReturnButton {
+                Button(returnLabel, systemImage: "arrow.uturn.backward") {
+                    onReturn()
+                }
+                .labelStyle(.iconOnly)
+                .buttonStyle(.borderless)
+                .controlSize(.small)
+                .help(returnLabel)
+                .accessibilityLabel(returnLabel)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+    }
+}
+
+private struct TimelineYearSection: View {
     let year: Int
     let months: [TimelineMonthMarker]
     let focusedDate: Date
-    let isFocused: Bool
-    let showsMonths: Bool
     let onSelectYear: () -> Void
-    let onPreviewYear: (Date) -> Void
-    let onCommitPreview: () -> Void
     let onSelectMonth: (TimelineMonthMarker) -> Void
-    let onPreviewMonth: (TimelineMonthMarker) -> Void
-    let onCommitMonthPreview: () -> Void
+
+    private var isFocusedYear: Bool {
+        Calendar.autoupdatingCurrent.component(.year, from: focusedDate) == year
+    }
 
     var body: some View {
-        VStack(alignment: .trailing, spacing: 6) {
+        VStack(alignment: .leading, spacing: 8) {
             Button(action: onSelectYear) {
                 Text(String(year))
-                    .font(.system(size: isFocused ? 14 : 13, weight: isFocused ? .semibold : .medium))
-                    .foregroundStyle(isFocused ? Color.primary : Color.secondary)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 5)
-                    .background(
-                        Capsule(style: .continuous)
-                            .fill(isFocused ? Color.secondary.opacity(0.14) : Color.clear)
-                    )
+                    .font(.title3.weight(isFocusedYear ? .semibold : .medium))
+                    .monospacedDigit()
+                    .foregroundStyle(isFocusedYear ? Color.primary : Color.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 8)
+                    .background(selectionFill(isFocused: isFocusedYear))
             }
             .buttonStyle(.plain)
-            .contentShape(Rectangle())
-            .highPriorityGesture(
-                DragGesture(minimumDistance: 6)
-                    .onChanged { _ in
-                        if let previewDate = months.first?.startDate {
-                            onPreviewYear(previewDate)
-                        }
-                    }
-                    .onEnded { _ in
-                        onCommitPreview()
-                    }
-            )
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             .accessibilityLabel("Jump to \(year)")
 
-            if showsMonths {
-                VStack(alignment: .trailing, spacing: 4) {
-                    ForEach(months) { marker in
-                        Button {
+            VStack(alignment: .leading, spacing: 4) {
+                ForEach(months) { marker in
+                    TimelineMonthButton(
+                        marker: marker,
+                        isFocused: isFocusedMonth(marker),
+                        action: {
                             onSelectMonth(marker)
-                        } label: {
-                            Text(marker.shortLabel)
-                                .font(.caption.weight(isFocusedMonth(marker) ? .semibold : .medium))
-                                .foregroundStyle(isFocusedMonth(marker) ? Color.primary : Color.secondary)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 3)
-                                .background(
-                                    Capsule(style: .continuous)
-                                        .fill(isFocusedMonth(marker) ? Color.secondary.opacity(0.12) : Color.clear)
-                                )
                         }
-                        .buttonStyle(.plain)
-                        .highPriorityGesture(
-                            DragGesture(minimumDistance: 6)
-                                .onChanged { _ in
-                                    onPreviewMonth(marker)
-                                }
-                                .onEnded { _ in
-                                    onCommitMonthPreview()
-                                }
-                        )
-                        .accessibilityLabel("Jump to \(marker.startDate.formatted(date: .abbreviated, time: .omitted))")
-                    }
+                    )
                 }
             }
+            .padding(.leading, 4)
         }
-        .frame(maxWidth: .infinity, alignment: .trailing)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private func isFocusedMonth(_ marker: TimelineMonthMarker) -> Bool {
@@ -159,11 +157,54 @@ private struct TimelineYearGroup: View {
         return calendar.component(.year, from: focusedDate) == marker.year &&
             calendar.component(.month, from: focusedDate) == marker.month
     }
+
+    @ViewBuilder
+    private func selectionFill(isFocused: Bool) -> some View {
+        if isFocused {
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(Color.secondary.opacity(0.12))
+        } else {
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(Color.clear)
+        }
+    }
+}
+
+private struct TimelineMonthButton: View {
+    let marker: TimelineMonthMarker
+    let isFocused: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 8) {
+                Text(marker.shortLabel)
+                    .font(.subheadline.weight(isFocused ? .semibold : .regular))
+                    .foregroundStyle(isFocused ? Color.primary : Color.secondary)
+
+                Spacer(minLength: 8)
+
+                Text(marker.messageCount.groupedCount)
+                    .font(.caption.monospacedDigit())
+                    .foregroundStyle(.tertiary)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background {
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(isFocused ? Color.secondary.opacity(0.08) : Color.clear)
+            }
+        }
+        .buttonStyle(.plain)
+        .id("month-\(marker.year)-\(marker.month)")
+        .accessibilityLabel("Jump to \(marker.startDate.formatted(date: .abbreviated, time: .omitted))")
+    }
 }
 
 private struct TimelineEmptyStateView: View {
     var body: some View {
-        VStack(alignment: .trailing, spacing: 6) {
+        VStack(alignment: .leading, spacing: 6) {
             Text("No timeline")
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
@@ -171,32 +212,11 @@ private struct TimelineEmptyStateView: View {
             Text("The archive index has not loaded enough history to show year and month anchors yet.")
                 .font(.caption)
                 .foregroundStyle(.tertiary)
-                .multilineTextAlignment(.trailing)
+                .fixedSize(horizontal: false, vertical: true)
+                .multilineTextAlignment(.leading)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("No timeline anchors available yet")
-    }
-}
-
-private struct TimelineFocusBadge: View {
-    let date: Date
-    let isPending: Bool
-
-    var body: some View {
-        VStack(alignment: .trailing, spacing: 2) {
-            Text(date, format: .dateTime.month(.abbreviated))
-                .font(.caption2.weight(.semibold))
-                .foregroundStyle(.secondary)
-
-            Text(date, format: .dateTime.year())
-                .font(.caption.weight(.semibold))
-
-            if isPending {
-                Text("Release to jump")
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .trailing)
     }
 }

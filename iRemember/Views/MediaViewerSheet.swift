@@ -22,6 +22,13 @@ struct MediaViewerSheet: View {
                 .background(.background)
                 .highPriorityGesture(navigationGesture)
                 .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Close", systemImage: "xmark") {
+                            appModel.dismissMediaViewer()
+                        }
+                        .keyboardShortcut(.cancelAction)
+                    }
+
                     ToolbarItemGroup {
                         Button("Previous", systemImage: "chevron.left") {
                             appModel.selectAdjacentMedia(offset: -1)
